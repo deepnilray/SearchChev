@@ -1,0 +1,48 @@
+name: searchchev-auto
+
+# Manual run: Actions tab -> searchchev-auto -> Run workflow.
+# Each run restores the previous run's saved model/progress, searches for up to `hours`,
+# then saves progress again and uploads the results as an artifact.
+on:
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: "Search hours (job limit is 6 h; keep at 5 or less)"
+        default: "5"
+      target:
+        description: "Stop after this many verified candidates"
+        default: "5"
+
+jobs:
+  auto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Restore previous progress
+        uses: actions/cache/restore@v4
+        with:
+          path: run1
+          key: searchchev-run1-${{ github.run_id }}
+          restore-keys: searchchev-run1-
+      - name: Search (preflight, train, validate, search)
+        run: python varwise_gaia_hunt.py auto --out run1 --hours ${{ inputs.hours }} --target ${{ inputs.target }}
+      - name: Save progress
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: run1
+          key: searchchev-run1-${{ github.run_id }}
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run1-${{ github.run_id }}
+          path: |
+            run1/
+            !run1/ztf_cache/
