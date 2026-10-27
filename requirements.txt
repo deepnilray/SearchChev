@@ -1,0 +1,9 @@
+astropy
+scikit-learn
+pandas
+scipy
+matplotlib
+joblib
+pyvo
+astroquery
+requests
