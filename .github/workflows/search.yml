@@ -16,6 +16,8 @@ on:
 jobs:
   auto:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
@@ -46,3 +48,24 @@ jobs:
           path: |
             run1/
             !run1/ztf_cache/
+      - name: Publish small result files to the results branch
+        if: always()
+        env:
+          RUN_ID: ${{ github.run_id }}
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          URL="https://x-access-token:${TOKEN}@github.com/${REPO}.git"
+          if git ls-remote --exit-code --heads "$URL" results >/dev/null 2>&1; then
+            git clone -q --depth 1 --branch results "$URL" res
+          else
+            mkdir res && cd res && git init -q -b results && git remote add origin "$URL" && cd ..
+          fi
+          mkdir -p "res/logs/${RUN_ID}"
+          cp run1/auto.log run1/*.json run1/*.csv "res/logs/${RUN_ID}/" 2>/dev/null || true
+          cd res
+          git config user.name searchchev-bot
+          git config user.email searchchev-bot@users.noreply.github.com
+          git add -A
+          git commit -q -m "logs for run ${RUN_ID}" || exit 0
+          git push -q origin results
