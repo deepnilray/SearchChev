@@ -40,3 +40,20 @@ held-out AUC is at least 0.85 and a shuffled-label control is near 0.5.
   check imaging for blends, test double the period, run MPChecker, search VSX by position.
 - Known limits: single events are not found by the periodic channels; the anomaly queue
   (`--include-anomalies`) flags every kind of variability and is a lead generator only.
+
+## EulerSearch #1: `eulerattack.py` (sealed, gated attack)
+
+VarWISE Pure targets x ZTF DR24 light curves, trained on VSX confirmed variables (positives) and
+Gaia-quiet stars (negatives, judged by a different instrument). Shape features only; magnitude-matched
+classes; sky tiles fixed in a manifest before any download; a guard refuses any access outside the
+current phase; validation tiles open only after the fit; the gate requires AUC lower bound >= 0.85,
+shuffled control near 0.5, false-positive upper bound <= 5%, >= 150 per class. Failure stops; there is
+no untrained mode.
+
+```
+python eulerattack.py brutetest            # offline adversarial test: 10/10 checks passed (synthetic sky)
+python eulerattack.py census --out c1      # measures data adequacy on real tiles
+python eulerattack.py train  --out a1
+python eulerattack.py search --out a1 --hours 5 --target 20
+```
+Real-sky performance is not yet measured.
