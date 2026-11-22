@@ -1,0 +1,27 @@
+name: realsky-search
+# Manual start only: Actions tab -> realsky-search -> Run workflow (branch realsky-validation).
+on:
+  workflow_dispatch:
+jobs:
+  shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements-realsky.txt
+      - name: Search, vet and publish (one tile at a time)
+        env:
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: ./ci_shard.sh ${{ matrix.shard }} 20 330

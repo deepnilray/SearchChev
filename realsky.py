@@ -325,9 +325,15 @@ def run_search(a):
     st = json.load(open(st_p)) if os.path.exists(st_p) else dict(done=[], scanned=0, scored=0)
     out_p = os.path.join(a.out, "search_hits.csv")
     t0 = time.time()
-    for tile in man["search"]:
-        if tile["id"] in st["done"] or tile["b"] > a.search_bmax:
+    pool_tiles = [t for t in man["search"] if t["b"] <= a.search_bmax]
+    pool_tiles = [t for i, t in enumerate(pool_tiles) if i % a.nshards == a.shard]
+    n_this = 0
+    for tile in pool_tiles:
+        if tile["id"] in st["done"]:
             continue
+        if n_this >= a.max_tiles:
+            break
+        n_this += 1
         if time.time() - t0 > a.hours * 3600:
             break
         seal.check("search", tile)
@@ -387,6 +393,8 @@ if __name__ == "__main__":
     ap.add_argument("--seed", type=int, default=20261122)
     ap.add_argument("--scratch", default="/home/claude/work/scratch"); ap.add_argument("--hours", type=float, default=1.0)
     ap.add_argument("--search-bmax", type=float, default=35); ap.add_argument("--allow-unvalidated", action="store_true")
+    ap.add_argument("--shard", type=int, default=0); ap.add_argument("--nshards", type=int, default=1)
+    ap.add_argument("--max-tiles", type=int, default=10 ** 6)
     a = ap.parse_args()
     os.makedirs(a.scratch, exist_ok=True)
     run_train(a) if a.cmd == "train" else run_search(a)

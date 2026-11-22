@@ -1,0 +1,92 @@
+{
+ "n_val_pos": 356,
+ "n_val_neg": 4000,
+ "auc": 0.9544276685393259,
+ "auc_se": 0.007755835041639405,
+ "auc_lower95": 0.9392262318577127,
+ "shuffled_control": 0.49448946629213475,
+ "threshold": 0.9566853596013594,
+ "fp": 28,
+ "tp": 300,
+ "fpr": 0.007,
+ "fpr_upper95": 0.010098491598908849,
+ "recall": 0.8426966292134831,
+ "precision": 0.9146341463414634,
+ "recall_by_class": {
+  "CV": {
+   "n": 1,
+   "recall": 0.0,
+   "rule_recall": 0.0
+  },
+  "ECL": {
+   "n": 166,
+   "recall": 0.8192771084337349,
+   "rule_recall": 0.7650602409638554
+  },
+  "LPV": {
+   "n": 13,
+   "recall": 0.38461538461538464,
+   "rule_recall": 0.07692307692307693
+  },
+  "RR": {
+   "n": 34,
+   "recall": 1.0,
+   "rule_recall": 0.9411764705882353
+  },
+  "RS": {
+   "n": 136,
+   "recall": 0.9117647058823529,
+   "rule_recall": 0.4632352941176471
+  },
+  "YSO": {
+   "n": 6,
+   "recall": 0.16666666666666666,
+   "rule_recall": 0.0
+  }
+ },
+ "rule_fp": 9,
+ "rule_tp": 223,
+ "rule_fpr": 0.00225,
+ "rule_fpr_upper95": 0.004270970327947828,
+ "rule_recall": 0.6264044943820225,
+ "matched": {
+  "n_val_pos": 356,
+  "n_val_neg": 356,
+  "auc": 0.9555453856836259,
+  "auc_se": 0.007971209533375719,
+  "auc_lower95": 0.9399218149982095,
+  "shuffled_control": 0.4532624247780162,
+  "threshold": 0.9566853596013594,
+  "fp": 4,
+  "tp": 300,
+  "fpr": 0.011235955056179775,
+  "fpr_upper95": 0.02853000404809459,
+  "recall": 0.8426966292134831,
+  "precision": 0.9868421052631579,
+  "rule_fp": 2,
+  "rule_tp": 223,
+  "rule_fpr": 0.0056179775280898875,
+  "rule_fpr_upper95": 0.02024983642776382,
+  "rule_recall": 0.6264044943820225
+ },
+ "oof_auc": 0.9669636152692136,
+ "fingerprint": "1f6a59fcaae23814a4fc91b978cce8da9af2a63e51c998a583d4cc8145525cfb",
+ "features": [
+  "log_fap",
+  "power",
+  "amp_over_err",
+  "chi2red",
+  "log_period",
+  "skew",
+  "iqr_over_err",
+  "von_neumann",
+  "ecl_snr",
+  "ecl_depth_over_err",
+  "ecl_epochs",
+  "ecl_depth_scatter",
+  "ecl_concentration",
+  "ecl_frac_in_faint"
+ ],
+ "fail_reasons": [],
+ "validated": true
+}
