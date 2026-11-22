@@ -6,23 +6,60 @@ CATS = {"VSX": "B/vsx/vsx", "ZTF_Chen2020": "J/ApJS/249/18/table2", "ZTF_Chen202
         "Gaia_DR3_vari": "I/358/vclassre", "TESS_EB": "J/ApJS/258/16/tess-ebs",
         "TESS_10k_EB": "J/ApJS/279/50/table3", "TESS_10k_unvetted": "J/ApJS/279/50/table2"}
 
+MIRRORS = ["https://vizier.cfa.harvard.edu/viz-bin/asu-tsv", "https://vizier.idia.ac.za/viz-bin/asu-tsv"]
+
+
+def _cone_once(url, src, ra, dec, r_arcsec):
+    x = requests.get(url, params={"-source": src, "-c": f"{ra:.6f} {dec:+.6f}", "-c.rs": r_arcsec,
+                                  "-out.max": 20, "-out.add": "_r", "-out.all": ""}, timeout=60)
+    if x.status_code != 200 or "#RESOURCE=" not in x.text or "QUERY_STATUS=ERROR" in x.text:
+        raise RuntimeError("bad response")
+    lines = [l for l in x.text.splitlines() if l and not l.startswith("#")]
+    if len(lines) <= 3 or not lines[0].startswith("_r"):
+        if any(l.startswith("Content-Type") for l in lines):
+            raise RuntimeError("garbled response")
+        return pd.DataFrame()
+    d = pd.read_csv(io.StringIO("\n".join([lines[0]] + lines[3:])), sep="\t")
+    d["_r"] = pd.to_numeric(d["_r"], errors="coerce")
+    return d[d["_r"] <= r_arcsec + 0.01]
+
+
 def cone(src, ra, dec, r_arcsec):
-    for k in range(3):
-        try:
-            x = requests.get(CFA, params={"-source": src, "-c": f"{ra:.6f} {dec:+.6f}", "-c.rs": r_arcsec,
-                                         "-out.max": 20, "-out.add": "_r", "-out.all": ""}, timeout=60)
-            if x.status_code == 200 and "#RESOURCE=" in x.text and "QUERY_STATUS=ERROR" not in x.text:
-                lines = [l for l in x.text.splitlines() if l and not l.startswith("#")]
-                if len(lines) <= 3:
-                    return pd.DataFrame()
-                return pd.read_csv(io.StringIO("\n".join([lines[0]] + lines[3:])), sep="\t")
-        except Exception:
-            pass
-        time.sleep(3 * (k + 1))
-    raise RuntimeError(f"VizieR error for {src}")
+    """Query both mirrors; a hit on either counts. Raises unless at least one mirror answers cleanly."""
+    ok = []
+    for url in MIRRORS:
+        for k in range(2):
+            try:
+                d = _cone_once(url, src, ra, dec, r_arcsec)
+                if len(d):
+                    return d
+                ok.append(url); break
+            except Exception:
+                time.sleep(2)
+    if not ok:
+        raise RuntimeError(f"VizieR error for {src}")
+    return pd.DataFrame()
+
+
+_VR = None
+
+
+def vanroestel(ra, dec, r_arcsec):
+    """van Roestel et al. ZTF eclipsing white dwarf catalogue (1,348 systems; public explorer data.js)."""
+    global _VR
+    import numpy as np, os
+    if _VR is None:
+        _VR = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_vanroestel_ewd.csv"))
+    sep = 3600 * np.hypot((_VR.ra - ra) * np.cos(np.radians(dec)), _VR.dec - dec)
+    j = int(np.argmin(sep))
+    return _VR.iloc[j].to_dict() if sep.iloc[j] < r_arcsec else None
+
 
 def prior_art(ra, dec, r_arcsec=5):
     hits = {}
+    v = vanroestel(ra, dec, r_arcsec)
+    if v:
+        hits["ZTF_eclipsingWD_vanRoestel"] = v
     for name, src in CATS.items():
         try:
             d = cone(src, ra, dec, r_arcsec)

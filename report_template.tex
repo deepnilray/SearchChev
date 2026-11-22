@@ -1,0 +1,121 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{url}\usepackage{booktabs,graphicx,amsmath,hyperref,longtable,array}
+\usepackage[T1]{fontenc}\usepackage{lmodern}\usepackage{microtype}\emergencystretch=2em
+\title{SearchChev on the real sky: a sealed validation and @NAB@ new\\ periodic variable stars from ZTF}
+\author{Deepnil Ray}
+\date{23 November 2026}
+\begin{document}\maketitle
+\begin{abstract}
+The SearchChev detector now runs entirely on real survey data: ZTF DR23 light curves read straight from the public HATS parquet archive, with Gaia DR3 variability labels fetched by \texttt{source\_id} range. On four sealed sky tiles opened only after the model and threshold were frozen, it separates Gaia-classified variables from Gaia-quiet stars with AUC $0.954\pm0.008$ and a false-positive rate of $0.7\%$ (Wilson 95\% upper bound $1.0\%$); the full decision rule passes $9$ of $4000$ quiet stars ($0.23\%$) while keeping $63\%$ of the variables. A search of @NTILES@ further tiles at $15^\circ\le|b|\le35^\circ$ scored @SCORED@ of @SCANNED@ Gaia-quiet stars (G $=13$--$18.5$). @NNEW@ survivors without a catalogue entry were vetted independently in every ZTF field and band, and @NPASS@ passed. A final check against VSX, the ZTF periodic and suspected variables of Chen et al.\ (2020), ASAS-SN, ATLAS, Gaia DR3, three TESS eclipsing-binary lists, the ZTF eclipsing white-dwarf catalogue of van Roestel et al.\ and SIMBAD identified @NK@ as known, and @NC@ more are set aside as possible systematics. The remaining @NAB@ stars, graded A (@NA@) or B (@NB@), have no published variability record in any of these sources; the A grade includes @NEB@ eclipsing binaries with eclipses of 0.15--0.6 mag.
+\end{abstract}
+
+\section{Data}
+\textbf{Light curves.} ZTF DR23 is served by IRSA as a HATS-partitioned parquet catalogue on S3 (\url{s3://ipac-irsa-ztf/contributed/dr23/lc/hats}). Each order-5 partition ($\approx3.4$ deg$^2$) was read with \texttt{pyarrow}, keeping $r$-band rows with at least 60 epochs and \texttt{catflags}$\,=0$.
+
+\textbf{Labels.} A Gaia DR3 \texttt{source\_id} carries its level-12 nested HEALPix index in its top bits, $\lfloor \texttt{source\_id}/2^{35}\rfloor$, so the order-5 pixel $p$ is exactly the interval
+\[
+p\cdot4^{7}\cdot2^{35}\;\le\;\texttt{source\_id}\;<\;(p+1)\cdot4^{7}\cdot2^{35},
+\]
+and each tile needs one indexed range query. Positives are stars in \texttt{vari\_classifier\_result} whose class ZTF can see (ECL, RR, CEP, T2CEP, LPV, RS, YSO, CV). Negatives are stars with no \texttt{vari\_summary} row, \texttt{phot\_variable\_flag} not VARIABLE and RUWE $<1.4$. Some negatives are unrecognised variables, so every false-positive rate below is an upper bound. ZTF objects were matched to Gaia within $1.5''$, requiring no other G$<18.5$ Gaia star within $3''$; where several fields observe a star, the light curve with most epochs is used.
+
+\section{Detector and sealed validation}
+Features are the 14 shape statistics of SearchChev (Lomb--Scargle significance, power, amplitude over error, reduced $\chi^2$, period, skew, IQR over error, von Neumann ratio, and six box-eclipse statistics). Magnitude, epoch count and baseline are excluded so the model cannot learn brightness. A gradient-boosted classifier was trained on eight tiles, magnitude-matched per 0.5 mag bin, and its threshold was set from grouped out-of-fold scores at a 1\% false-positive target. Tiles were assigned train / validation / search by a seeded permutation written to disk before any download, and every access is logged against its phase.
+
+One protocol change is recorded: after the first fit on training tiles only, 790 of 1599 positives were Gaia SOLAR\_LIKE stars, which pass the periodogram gate 6\% of the time in ZTF. The positive set was restricted to the classes above and refitted before any validation feature existed (\texttt{PREREGISTRATION.txt}).
+
+\begin{table}[h]\centering
+\begin{tabular}{p{8cm}p{6.5cm}}\toprule
+Sealed validation tiles & 4 ($|b|=16$--$28^\circ$)\\
+Variables / quiet stars & 356 / 4000\\
+AUC (95\% lower bound) & 0.954 (0.939)\\
+Shuffled-label control AUC & 0.494\\
+Threshold & 0.957\\
+False positives at threshold & 28/4000 = 0.70\% (upper 1.01\%)\\
+Recall at threshold & 84.3\%\\
+Full rule FPR (threshold plus periodogram or eclipse gate) & 9/4000 = 0.23\% (upper 0.43\%)\\
+Full rule recall & 62.6\%\\
+Full rule recall by class & ECL 77\%, RR 94\%, RS 46\%, LPV 8\% (13 stars)\\
+\bottomrule\end{tabular}
+\caption{Sealed real-sky validation. Every gate criterion is met: AUC lower bound $\ge0.85$, control within $0.5\pm0.08$, FPR upper bound $\le5\%$, recall $\ge30\%$.}
+\end{table}
+
+The nine quiet stars that passed the full rule were vetted with the procedure of Section~\ref{sec:vet}. Eight showed their period in only one light curve, all from a few field/CCD combinations, and one was an ATLAS candidate. The detector alone therefore lets instrumental signals through at the $0.2\%$ level, and the multi-light-curve vetting is what removes them.
+
+\section{Search}
+Search tiles so far (HEALPix order-5 pixels): @TILELIST@. Targets were Gaia-quiet stars only, the population DPAC did not flag. Stars whose IQR over median error fell below the value that keeps 95\% of the sealed positives were skipped. A star was kept if it passed the frozen threshold and the periodogram or eclipse gate and recovered the same period (or $\tfrac12$, $2\times$ it, within 3\%) in each temporal half of its light curve. This gave @NHIT@ stars, @NNEW@ of them without a catalogue entry at that stage.
+
+\section{Vetting and prior art}\label{sec:vet}
+For every survivor, all ZTF DR23 rows within $2''$ in $g$, $r$ and $i$ and every field and CCD were analysed separately. A star passes when at least two independent light curves recover the period (to 1\%, allowing $\times\tfrac12$, $\times2$) at $\log_{10}\mathrm{FAP}<-3$ and no Gaia star brighter than G$+1$ lies within $8''$. The period was refined with a four-harmonic Lomb--Scargle fit over all light curves jointly.
+
+Each passing star was rechecked at $5''$ against VSX, Chen et al.\ (2020) variables and suspects, ASAS-SN, ATLAS (Heinze et al.\ 2018), Gaia DR3 \texttt{vari\_classifier\_result}, TESS EBs (Prša et al.\ 2022), the TESS 10k EB catalogue and its unvetted target list (Kostov et al.\ 2025) and the 1{,}348 ZTF eclipsing white dwarfs of van Roestel et al.\ (2026, public explorer), and at $10''$ against SIMBAD. Catalogued variables within $30''$ were compared in period to exclude light leaking from a neighbour; none matched. For a subset the full VizieR index at $5''$ was queried and returned only photometric, astrometric and stellar-parameter catalogues.
+
+Known stars found at this stage: @KNOWN@. One of them deserves comment: Gaia DR3 891648542228297600 shows 2-mag eclipses in $g$ at $P=0.177519$ d and sits 2 mag below the main sequence (M$_G=9.5$, BP$-$RP $=1.59$), the signature of a white dwarf eclipsed by an M dwarf. It is ZTFJ0705+3448 in the van Roestel catalogue, with the same period to six digits. Its recovery by a detector never trained on white-dwarf binaries is an independent check of sensitivity, and its removal shows the prior-art screen working. The first in-loop catalogue query also missed three stars when the server returned errors; the cone query now treats any response without a VizieR resource header as an error.
+
+\textbf{Image check.} Legacy Survey DR10 (or Pan-STARRS1 where DR10 has no coverage) cutouts of every A and B star (Figure~\ref{fig:cut}) show point sources with no companion inside the ZTF point-spread function for all grade A stars. Five grade B stars have a neighbour that could add light at some level: 982449618359742848 and 5760477830376194944 (fainter stars at 5--6$''$), 2277455856663904512 and 2277532169642899072 (brighter stars at 12--15$''$), and 891555839654582400 (a saturated star at 18$''$). Their periods hold in independent fields and no catalogued neighbour shares them, but these five should be checked with difference imaging before submission.
+
+\section{Results}
+Grades: \textbf{A} (@NA@): unambiguous shape, amplitude $\ge0.08$ mag or clear eclipses, several light curves agree; \textbf{B} (@NB@): coherent low-amplitude signal in two bands or fields; \textbf{C} (@NC@): passed vetting but flagged here, for example two stars $0.3^\circ$ apart sharing a 22.7 d period, a 5.32 d star beside a 5.38 d TESS EB in the same tile, and periods set by seasonal sampling. Grade C is not claimed.
+
+{\small\setlength{\tabcolsep}{3.5pt}
+\begin{longtable}{rrrrrrrcc}
+\caption{Grade A. $P$ is the refined Lomb--Scargle period; Amp is the fitted $r$ amplitude proxy; Agree counts the independent light curves recovering $P$.}\\
+\toprule Gaia DR3 & RA & Dec & G & BP$-$RP & $P$ (d) & Amp & Agree & Bands\\\midrule\endfirsthead
+\toprule Gaia DR3 & RA & Dec & G & BP$-$RP & $P$ (d) & Amp & Agree & Bands\\\midrule\endhead
+@ROWSA@
+\bottomrule\end{longtable}}
+
+{\small
+\begin{longtable}{>{\raggedright}p{4.2cm}p{11cm}}
+\toprule Gaia DR3 & Light-curve notes\\\midrule
+@NOTES@
+\bottomrule\end{longtable}}
+
+{\small\setlength{\tabcolsep}{3.5pt}
+\begin{longtable}{rrrrrrrcc}
+\caption{Grade B.}\\
+\toprule Gaia DR3 & RA & Dec & G & BP$-$RP & $P$ (d) & Amp & Agree & Bands\\\midrule\endfirsthead
+\toprule Gaia DR3 & RA & Dec & G & BP$-$RP & $P$ (d) & Amp & Agree & Bands\\\midrule\endhead
+@ROWSB@
+\bottomrule\end{longtable}}
+
+{\small\setlength{\tabcolsep}{3.5pt}
+\begin{longtable}{rrrrrrrcc}
+\caption{Grade C (not claimed) and stars identified as known.}\\
+\toprule Gaia DR3 & RA & Dec & G & BP$-$RP & $P$ (d) & Amp & Agree & Bands\\\midrule
+\multicolumn{9}{l}{\emph{Grade C}}\\
+@ROWSC@
+\multicolumn{9}{l}{\emph{Known}}\\
+@ROWSK@
+\bottomrule\end{longtable}}
+
+\paragraph{Odd--even test.} For the two deepest equal-eclipse binaries the median depths in odd and even cycles at the listed $P$ agree within errors ($g$: $0.155\pm0.011$ vs $0.150\pm0.017$ and $0.454\pm0.025$ vs $0.488\pm0.031$ mag), and nothing is seen at phase 0.5. Either the orbit is $2P$ with two near-equal eclipses, or the secondary eclipse is undetectably shallow; ZTF cannot separate the two.
+
+\section{VSX submission draft}
+VSX entries need a type, a range, a period and an epoch. These were measured from the combined ZTF $r$ light curves (each field shifted to the median of the longest one); the range is the 2nd percentile to the maximum of the 100-bin phased median, and the epoch is the faintest bin nearest the middle of the baseline. Eclipsing binaries with equal eclipses are listed at $2P$ by the VSX convention, with a remark. Types with a colon or a bar are uncertain and say so.
+
+{\small\setlength{\tabcolsep}{4pt}
+\begin{longtable}{rlccc}
+\toprule Gaia DR3 & Type & Range ($r$) & Period (d) & Epoch (HJD, min)\\\midrule\endhead
+@VSXROWS@
+\bottomrule\end{longtable}}
+
+\section{Scaling up}
+The search runs one tile at a time and publishes after every tile, so a job can stop anywhere without loss. A GitHub Actions workflow (\texttt{.github/workflows/realsky.yml}) splits the 2{,}094 remaining search tiles over 20 parallel runners with four cores each; every runner searches, vets and rechecks prior art tile by tile and pushes its results to the \texttt{realsky-results} branch. At the measured yield of three to four graded new stars per tile, one 5.5-hour pass of 20 runners covers roughly 200 tiles.
+
+\section{What remains}
+\begin{enumerate}
+\item Submit the A and B stars to VSX from the draft above, with the folded light curves as evidence.
+\item Fix the orbital periods of the equal-eclipse binaries with TESS or radial velocities.
+\item Run the scaled search and grade its output with the same rules.
+\end{enumerate}
+Gaia DR4 (2 December 2026) will release epoch photometry and new variability classifications for these fields; this report fixes the ZTF detections and their dates before that release.
+
+\section*{Reproducibility}
+Code on branch \texttt{realsky-validation} of the SearchChev repository: \texttt{realsky.py} (tiling, sealed train/validate, search), \texttt{vet.py}, \texttt{prior\_art.py}, \texttt{dossier.py}, \texttt{vsx\_prep.py}, \texttt{ci\_shard.sh}. Manifest fingerprint \texttt{1f6a59fcaae2}, seed 20261122. All inputs are public: ZTF DR23 (IRSA), Gaia DR3 (ESA archive), VizieR and SIMBAD (CfA mirrors), Legacy Survey and Pan-STARRS1 images.
+
+\begin{figure}[p]\centering\includegraphics[width=\textwidth]{realsky_figs/cutouts.jpg}
+\caption{40$''$ image cutouts of the A and B stars (Legacy Survey DR10; Pan-STARRS1 $gri$ where DR10 is missing). The circle has a 3.75$''$ radius.}\label{fig:cut}\end{figure}
+
+@FIGS@
+\end{document}
