@@ -1,0 +1,1 @@
+2026-11-22 run killed after fit, before any validation features; positives restricted to ZTF_VISIBLE from training-tile pass rates; same manifest
