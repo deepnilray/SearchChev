@@ -54,4 +54,6 @@ jobs:
           echo "tiles remaining: $LEFT"
           if [ "$LEFT" -gt 0 ]; then
             gh workflow run realsky.yml --ref "${{ github.ref_name }}" -R "${{ github.repository }}"
+          else
+            gh workflow run postprocess.yml --ref "${{ github.ref_name }}" -R "${{ github.repository }}"
           fi

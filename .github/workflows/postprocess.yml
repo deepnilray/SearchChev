@@ -1,0 +1,37 @@
+name: realsky-catalogue
+# Runs once by itself when realsky-search has no sky tiles left (it never competes with the search for runners).
+# Can also be started by hand: Actions -> realsky-catalogue -> Run workflow (branch realsky-validation).
+# Output goes to the realsky-catalogue branch: merged catalogue, final prior-art check, sky-image sheets.
+on:
+  workflow_dispatch:
+concurrency:
+  group: realsky-catalogue
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements-realsky.txt pillow
+      - name: Merge, re-check prior art, make sky-image sheets
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git clone -q --depth 1 --branch realsky-results "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" prev
+          python postprocess.py prev out
+      - name: Publish to realsky-catalogue
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          URL="https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
+          git clone -q --depth 1 --branch realsky-catalogue "$URL" pub 2>/dev/null || { mkdir pub && cd pub && git init -q && git checkout -q -b realsky-catalogue && git remote add origin "$URL" && cd ..; }
+          rm -rf pub/latest && mkdir -p pub/latest && cp -r out/* pub/latest/
+          cd pub && git add -A
+          git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "catalogue $(date -u +%FT%TZ) run ${GITHUB_RUN_ID}" && git push -q origin HEAD:realsky-catalogue
