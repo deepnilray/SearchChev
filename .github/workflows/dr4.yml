@@ -1,0 +1,63 @@
+name: dr4-search
+# Whole-archive search of Gaia epoch photometry (dr4engine.py). Start by hand on release day:
+#   Actions -> dr4-search -> Run workflow -> branch dr4-engine, release gdr4, stage A.
+# Stage A processes the sealed training and validation ranges; when none remain it trains and gates the
+# missed-variable model (dr4post.py train) and starts stage C. Stage C processes every search range; when none remain
+# it builds the catalogue and runs the ZTF / NEOWISE / prior-art follow-up. Results: branch dr4-results-<release>.
+on:
+  workflow_dispatch:
+    inputs:
+      release: {description: "gdr4 (or gdr3 for a rehearsal)", default: "gdr4", required: true}
+      stage: {description: "A (train+validation ranges) or C (search ranges)", default: "A", required: true}
+concurrency:
+  group: dr4-search-${{ inputs.release }}
+  cancel-in-progress: false
+jobs:
+  shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    permissions: {contents: write}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.13", cache: pip}
+      - run: pip install -r requirements-realsky.txt pillow
+      - name: Search one range at a time and publish
+        env: {TOKEN: "${{ github.token }}", REPO: "${{ github.repository }}"}
+        run: ./ci_dr4.sh ${{ matrix.shard }} 20 300 ${{ inputs.release }} ${{ inputs.stage == 'A' && 'train,validation' || 'search' }}
+  next:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    permissions: {actions: write, contents: write}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.13", cache: pip}
+      - run: pip install -r requirements-realsky.txt pillow
+      - name: Continue, train, or finish
+        env: {GH_TOKEN: "${{ github.token }}", REL: "${{ inputs.release }}", STAGE: "${{ inputs.stage }}"}
+        run: |
+          BR="dr4-results-$REL"; URL="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git clone -q --depth 1 --branch "$BR" "$URL" prev || exit 0
+          if [ -f prev/SCHEMA_ALERT.txt ]; then echo "schema alert: needs a code update"; cat prev/SCHEMA_ALERT.txt; exit 0; fi
+          PH=$([ "$STAGE" = "A" ] && echo train,validation || echo search)
+          LEFT=$(python dr4_remaining.py "$REL" "$PH" prev/ranges | tail -1); echo "ranges left in stage $STAGE: $LEFT"
+          if [ "$LEFT" -gt 0 ]; then
+            gh workflow run dr4.yml --ref "${{ github.ref_name }}" -R "${{ github.repository }}" -f release="$REL" -f stage="$STAGE"; exit 0
+          fi
+          cd prev
+          if [ "$STAGE" = "A" ]; then
+            python ../dr4post.py train . model || echo "model failed its gate: stage C runs the rare-event searches only"
+            git add -A; git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "missed-variable model ($REL)" && git push -q origin HEAD:"$BR"
+            cd ..; gh workflow run dr4.yml --ref "${{ github.ref_name }}" -R "${{ github.repository }}" -f release="$REL" -f stage=C
+          else
+            python ../dr4post.py collect . catalogue && (cd .. && python dr4post.py followup prev/catalogue 300)
+            git add -A; git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "catalogue and follow-up ($REL)" && git push -q origin HEAD:"$BR"
+          fi
