@@ -52,6 +52,24 @@ def order5_tiles(cache, bmin=15.0, bmax=90.0, dec_min=-25.0):
                  rows=int(r.num_rows)) for r in out.itertuples()]
 
 
+def extra_order_tiles(cache, bmin=15.0, bmax=35.0, dec_min=-25.0):
+    """HATS partitions stored at orders 4 and 6 (sparser and denser sky). They never overlap order-5 partitions,
+    so adding them to the search pool cannot touch the sealed training or validation sky."""
+    from astropy_healpix import HEALPix
+    from astropy.coordinates import SkyCoord
+    import astropy.units as u
+    pi = partition_info(cache); out = []
+    for k in (4, 6):
+        p = pi[pi.Norder == k]
+        lon, lat = HEALPix(nside=2 ** k, order="nested").healpix_to_lonlat(p.Npix.values)
+        c = SkyCoord(lon.to(u.deg), lat.to(u.deg)); b = np.abs(c.galactic.b.deg)
+        ok = (b >= bmin) & (b <= bmax) & (c.dec.deg >= dec_min)
+        for r, ra, de, bb in zip(p[ok].itertuples(), c.ra.deg[ok], c.dec.deg[ok], b[ok]):
+            out.append(dict(id=f"o{k}_{int(r.Npix)}", order=k, npix=int(r.Npix), dir=int(r.Dir), ra=float(ra),
+                            dec=float(de), b=float(bb), rows=int(r.num_rows)))
+    return out
+
+
 def manifest(out, tiles, n_train, n_val, seed):
     path = os.path.join(out, "manifest.json")
     rng = np.random.default_rng(seed)
@@ -89,14 +107,16 @@ def gaia_tile(tile, cache):
     if os.path.exists(p):
         return pd.read_parquet(p)
     import pyvo
-    lo = tile["id"] * SID_PER_PIX5
+    k, npix = tile.get("order", 5), tile.get("npix", tile["id"])
+    span = 4 ** (12 - k) * 2 ** 35
+    lo = npix * span
     q = f"""SELECT g.source_id, g.ra, g.dec, g.pmra, g.pmdec, g.phot_g_mean_mag, g.bp_rp,
       g.phot_g_n_obs, g.phot_g_mean_flux_over_error, g.ruwe, g.phot_variable_flag,
       c.best_class_name, c.best_class_score, v.source_id AS vari_id
       FROM gaiadr3.gaia_source AS g
       LEFT JOIN gaiadr3.vari_summary AS v ON v.source_id = g.source_id
       LEFT JOIN gaiadr3.vari_classifier_result AS c ON c.source_id = g.source_id
-      WHERE g.source_id BETWEEN {lo} AND {lo + SID_PER_PIX5 - 1}
+      WHERE g.source_id BETWEEN {lo} AND {lo + span - 1}
       AND g.phot_g_mean_mag BETWEEN 13 AND 18.5"""
     s = pyvo.dal.TAPService(GAIA_TAP)
     for k in range(4):
@@ -119,7 +139,7 @@ def ztf_tile(tile, cache, min_epochs=60):
         return pd.read_pickle(p)
     import s3fs, pyarrow.parquet as pq, pyarrow.compute as pc
     fs = s3fs.S3FileSystem(anon=True)
-    f = pq.ParquetFile(fs.open(f"{HATS}/dataset/Norder=5/Dir={tile['dir']}/Npix={tile['id']}/"
+    f = pq.ParquetFile(fs.open(f"{HATS}/dataset/Norder={tile.get('order', 5)}/Dir={tile['dir']}/Npix={tile.get('npix', tile['id'])}/"
                                "part0.snappy.parquet", block_size=32 << 20))
     rows = []
     for g in range(f.metadata.num_row_groups):
@@ -320,6 +340,9 @@ def run_search(a):
     clf, thr = pack["model"], pack["threshold"]
     va = pd.read_parquet(os.path.join(a.out, "val_features.parquet"))
     cut = float(np.quantile(va[va.label == 1].iqr_over_err, 0.05))   # keeps 95% of sealed positives
+    if a.extra_orders:
+        have = {t["id"] for t in man["search"]}
+        man["search"] = man["search"] + [t for t in extra_order_tiles(a.cache) if t["id"] not in have]
     seal = Seal(man, a.out); seal.phase = "search"
     st_p = os.path.join(a.out, "search_state.json")
     st = json.load(open(st_p)) if os.path.exists(st_p) else dict(done=[], scanned=0, scored=0)
@@ -369,8 +392,9 @@ def run_search(a):
             pa = prior_art(float(r.ra), float(r.dec), 5)
             nb = prior_art(float(r.ra), float(r.dec), 30)
             rec["prior_art"] = ";".join(sorted(pa)); rec["neighbour_30as"] = ";".join(sorted(nb))
+            weak = {"GaiaDR2_LAV_Mowlavi2021", "TESS_10k_unvetted", "YSO_Delfini2025"}   # flags with no period or type
             rec["status"] = ("UNVERIFIED" if any(v == "ERROR" for v in pa.values()) else
-                             "KNOWN" if pa else "NEW_CANDIDATE")
+                             "KNOWN" if set(pa) - weak else "NEW_CANDIDATE")
             rows.append(rec)
         if rows:
             pd.DataFrame(rows).to_csv(out_p, mode="a", header=not os.path.exists(out_p), index=False)
@@ -395,6 +419,7 @@ if __name__ == "__main__":
     ap.add_argument("--search-bmax", type=float, default=35); ap.add_argument("--allow-unvalidated", action="store_true")
     ap.add_argument("--shard", type=int, default=0); ap.add_argument("--nshards", type=int, default=1)
     ap.add_argument("--max-tiles", type=int, default=10 ** 6)
+    ap.add_argument("--extra-orders", action="store_true", help="also search order-4 and order-6 partitions")
     a = ap.parse_args()
     os.makedirs(a.scratch, exist_ok=True)
     run_train(a) if a.cmd == "train" else run_search(a)

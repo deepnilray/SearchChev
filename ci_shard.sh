@@ -2,6 +2,7 @@
 # One shard of the real-sky search on a GitHub runner: search one tile at a time, vet, re-check prior art,
 # publish after every tile so nothing is lost at the job time limit.
 set -u
+export CACHE=cache
 K=$1; N=$2; BUDGET_MIN=${3:-320}
 OUT=work/shard$K; mkdir -p $OUT cache scratch
 cp results/realsky1/model/{frozen.joblib,manifest.json,validation_report.json,val_features.parquet} $OUT/
@@ -22,7 +23,7 @@ publish () {
 }
 while [ $(date +%s) -lt $(( END - 45 * 60 )) ]; do
   before=$(python -c "import json;print(len(json.load(open('$OUT/search_state.json'))['done']))")
-  python realsky.py search --out $OUT --cache cache --scratch scratch --shard $K --nshards $N --max-tiles 1 --hours 5 --workers 4 || break
+  python realsky.py search --out $OUT --cache cache --scratch scratch --shard $K --nshards $N --max-tiles 1 --hours 5 --workers 4 --extra-orders || break
   after=$(python -c "import json;print(len(json.load(open('$OUT/search_state.json'))['done']))")
   OUT=$OUT timeout 1200 python vet_pending.py
   OUT=$OUT timeout 1200 python dossier.py

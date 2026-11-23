@@ -6,10 +6,19 @@ from prior_art import prior_art, all_vizier
 from vet import simbad
 V = pd.concat([pd.DataFrame(columns=["source_id","verdict"])] + [pd.read_csv(f).assign(dir=f.rsplit("/", 2)[-2]) for f in glob.glob(OUT + "/vet_t*/vetting.csv")])
 V = V[V.verdict == "PASS"].drop_duplicates("source_id")
+# stars in one tile sharing a period (x0.5, x1, x2 within 1%) point to a shared systematic
+def _shares(r):
+    others = V[(V.dir == r.dir) & (V.source_id != r.source_id)]
+    return any(abs(r.period_refined / (q * f) - 1) < 0.002 for q in others.period_refined for f in (0.5, 1, 2))
+if len(V):
+    V["shares_period_in_tile"] = [_shares(r) for r in V.itertuples()]
+    if "auto_grade" in V:
+        V.loc[V.shares_period_in_tile, "auto_flags"] = V.loc[V.shares_period_in_tile, "auto_flags"].fillna("").astype(str) + "; shares period with another star in this tile"
+        V.loc[V.shares_period_in_tile & V.auto_grade.isin(["A", "B"]), "auto_grade"] = "C"
 import sys as _s
 if not _os.path.exists(OUT + "/search_hits.csv"): _s.exit(0)
 H = pd.read_csv(OUT + "/search_hits.csv").drop_duplicates("source_id")
-V = V.merge(H[["source_id", "G", "bp_rp", "amp", "amp_over_err", "channel", "score", "n", "span", "tile"]], on="source_id", how="left")
+V = V.drop(columns=[c for c in ("bp_rp", "amp", "amp_over_err", "channel", "score", "n", "span", "tile") if c in V]).merge(H[["source_id", "bp_rp", "amp", "amp_over_err", "channel", "score", "n", "span", "tile"]], on="source_id", how="left")
 import os, sys
 P = sys.argv[1] if len(sys.argv) > 1 else OUT + "/dossier.csv"
 done = set(pd.read_csv(P).source_id) if os.path.exists(P) else set()
