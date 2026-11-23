@@ -1,0 +1,57 @@
+name: realsky-search
+# Start once by hand: Actions tab -> realsky-search -> Run workflow (branch realsky-validation).
+# Each run: 20 runners, one sky tile at a time, results pushed to the realsky-results branch after every tile.
+# When a run ends and tiles remain, it starts the next run itself. To stop: Actions -> realsky-search -> "..." -> Disable workflow.
+on:
+  workflow_dispatch:
+concurrency:
+  group: realsky-search
+  cancel-in-progress: false
+jobs:
+  shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements-realsky.txt
+      - name: Search, vet and publish (one tile at a time)
+        env:
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: ./ci_shard.sh ${{ matrix.shard }} 20 330
+  next:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements-realsky.txt
+      - name: Start the next run if sky tiles remain
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git clone -q --depth 1 --branch realsky-results "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" prev || exit 0
+          mkdir -p cache
+          LEFT=$(python remaining.py prev | tail -1)
+          echo "tiles remaining: $LEFT"
+          if [ "$LEFT" -gt 0 ]; then
+            gh workflow run realsky.yml --ref "${{ github.ref_name }}" -R "${{ github.repository }}"
+          fi
