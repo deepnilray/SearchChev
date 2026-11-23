@@ -15,7 +15,7 @@ publish () {
     rm -rf pub; git clone -q --depth 1 --branch realsky-results "$URL" pub 2>/dev/null || { mkdir -p pub && cd pub && git init -q && git checkout -q -b realsky-results && git remote add origin "$URL" && cd ..; }
     mkdir -p $D
     cp $OUT/search_hits.csv $OUT/search_state.json $OUT/dossier.csv $D/ 2>/dev/null
-    for v in $OUT/vet_t*; do [ -d "$v" ] && mkdir -p $D/$(basename $v) && cp $v/vetting.csv $v/*.png $D/$(basename $v)/ 2>/dev/null; done
+    for v in $OUT/vet_t*; do [ -d "$v" ] && mkdir -p $D/$(basename $v) && cp $v/vetting.csv $v/*.png $v/*_lc.npz $D/$(basename $v)/ 2>/dev/null; done
     cd pub; git add -A; git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "shard $K run ${GITHUB_RUN_ID:-local}" || { cd ..; return; }
     if git push -q origin HEAD:realsky-results; then cd ..; return; fi
     cd ..; sleep $(( RANDOM % 20 + 5 ))
