@@ -35,7 +35,9 @@ publish () {
 }
 while [ $(date +%s) -lt $(( END - 45 * 60 )) ]; do
   before=$(python -c "import json;print(len(json.load(open('$OUT/search_state.json'))['done']))")
-  python realsky.py search --out $OUT --cache cache --scratch scratch --shard $K --nshards $N --max-tiles 1 --hours 5 --workers 4 --extra-orders --short-channel --search-bmax 90 || break
+  if ! timeout 6000 python realsky.py search --out $OUT --cache cache --scratch scratch --shard $K --nshards $N --max-tiles 1 --hours 5 --workers 4 --extra-orders --short-channel --search-bmax 90; then
+    echo "tile failed, retrying (a tile is skipped after two failures)"; rm -f cache/ztf_*.pkl scratch/*.pkl; sleep 30; continue
+  fi
   after=$(python -c "import json;print(len(json.load(open('$OUT/search_state.json'))['done']))")
   OUT=$OUT timeout 1200 python vet_pending.py
   OUT=$OUT timeout 1200 python dossier.py

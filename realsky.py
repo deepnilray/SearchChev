@@ -341,16 +341,27 @@ def run_train(a):
 
 # ----------------------------------------------------------------- search ---
 def short_period(args):
+    """Never lets one bad light curve crash a whole sky tile (a NaN light curve killed shard 0 on 23 Nov)."""
+    try:
+        return _short_period(args)
+    except Exception:
+        return None
+
+
+def _short_period(args):
     """Short-period channel (periods 20 min to 2.4 h), outside the trained detector's 0.1 d floor. A star is kept
     when the periodogram peak is far beyond chance (log FAP < -10), the semi-amplitude is >= 4x the median error,
     the frequency is not a whole number of cycles per day, and each half of the light curve recovers it."""
     from astropy.timeseries import LombScargle
     t, m, e = (np.asarray(x, float) for x in args[:3])
     p_main = args[3] if len(args) > 3 else None     # significant long-period signal, if the main channel found one
+    ok = np.isfinite(t) & np.isfinite(m) & np.isfinite(e) & (e > 0); t, m, e = t[ok], m[ok], e[ok]
     if len(t) < 80:
         return None
     med = np.median(m); mad = 1.4826 * np.median(np.abs(m - med)) + 1e-6
     k = np.abs(m - med) < 5 * mad + 3 * np.median(e); t, m, e = t[k], m[k], e[k]
+    if len(t) < 80 or np.ptp(t) <= 0:
+        return None
     ls = LombScargle(t, m, e)
     f, p = ls.autopower(minimum_frequency=10.0, maximum_frequency=72.0, samples_per_peak=2, method="fast")
     j = int(np.argmax(p)); f0 = f[j]
@@ -415,6 +426,16 @@ def run_search(a):
         n_this += 1
         if time.time() - t0 > a.hours * 3600:
             break
+        # A tile that crashes the process (archive error, out of memory) twice in a run is skipped and logged,
+        # so one bad tile can no longer stall a shard or keep the self-restarting workflow alive forever.
+        att = st.setdefault("attempts", {}); tid = str(tile["id"])
+        att[tid] = att.get(tid, 0) + 1
+        if att[tid] > 2:
+            st.setdefault("skipped", []).append(tile["id"]); st["done"].append(tile["id"])
+            json.dump(st, open(st_p, "w"))
+            print(f"  search tile {tile['id']}: SKIPPED after {att[tid] - 1} failed attempts", flush=True)
+            continue
+        json.dump(st, open(st_p, "w"))
         seal.check("search", tile)
         z = ztf_tile(tile, a.scratch)
         g = gaia_tile(tile, a.cache)
