@@ -341,6 +341,13 @@ def run_train(a):
 
 # ----------------------------------------------------------------- search ---
 def short_period(args):
+    try:
+        return _short_period(args)
+    except Exception:       # one odd light curve must never stop a tile
+        return None
+
+
+def _short_period(args):
     """Never lets one bad light curve crash a whole sky tile (a NaN light curve killed shard 0 on 23 Nov)."""
     try:
         return _short_period(args)
@@ -364,6 +371,8 @@ def _short_period(args):
         return None
     ls = LombScargle(t, m, e)
     f, p = ls.autopower(minimum_frequency=10.0, maximum_frequency=72.0, samples_per_peak=2, method="fast")
+    if len(p) == 0 or not np.all(np.isfinite(p)):
+        return None
     j = int(np.argmax(p)); f0 = f[j]
     fap = ls.false_alarm_probability(p[j], minimum_frequency=10.0, maximum_frequency=72.0)
     if not (fap < 1e-10) or abs(f0 - round(f0)) < 0.02:
@@ -437,70 +446,81 @@ def run_search(a):
             continue
         json.dump(st, open(st_p, "w"))
         seal.check("search", tile)
-        z = ztf_tile(tile, a.scratch)
-        g = gaia_tile(tile, a.cache)
-        tgt = g[g.vari_id.isna() & (g.phot_variable_flag != "VARIABLE") & (g.ruwe < 1.4)]
-        m = crossmatch(z, tgt)
-        zz = z.reset_index(drop=True)
-        io = np.array([cheap_stats(zz.t.iat[i], zz.m.iat[i], zz.e.iat[i]) for i in m.zi.values])
-        m = m[io >= cut]
-        jobs = [(zz.t.iat[i], zz.m.iat[i], zz.e.iat[i]) for i in m.zi.values]
-        from multiprocessing import Pool
-        with Pool(a.workers) as pool:
-            fs = pool.map(_feat, jobs, chunksize=20)
-        rows = []
-        for (k, r), f, zi in zip(m.iterrows(), fs, m.zi.values):
-            if not f:
-                continue
-            s = float(clf.predict_proba(pd.DataFrame([f])[SHAPE_FEATURES])[:, 1][0])
-            if s < thr or not (f["ls_pass"] or f["ecl_pass"]):
-                continue
-            lc = pd.DataFrame(dict(mjd=zz.t.iat[zi], mag=zz.m.iat[zi], magerr=zz.e.iat[zi]))
-            ecl = f["ecl_pass"] and not f["ls_pass"]
-            per = float(f["ecl_period"] if ecl else f["period"])
-            tc = (temporal_consistency_ecl if ecl else temporal_consistency_lc)(lc, per)
-            if not tc["confirmed"]:
-                continue
-            rec = dict(source_id=int(r.source_id), ra=r.ra, dec=r.dec, G=r.phot_g_mean_mag, bp_rp=r.bp_rp,
-                       ztf_objectid=int(zz.objectid.iat[zi]), score=s, channel="eclipse" if ecl else "periodic",
-                       period=per, tile=tile["id"], **{k2: f[k2] for k2 in ("amp", "amp_over_err", "log_fap",
-                       "ecl_snr", "ecl_depth", "n", "span", "mean_mag", "skew")},
-                       early_period=tc["early_period"], late_period=tc["late_period"])
-            pa = prior_art(float(r.ra), float(r.dec), 5)
-            nb = {}   # 30-arcsec neighbour check runs later, in dossier.py, for vetted stars only
-            rec["prior_art"] = ";".join(sorted(pa)); rec["neighbour_30as"] = ";".join(sorted(nb))
-            weak = {"GaiaDR2_LAV_Mowlavi2021", "TESS_10k_unvetted", "YSO_Delfini2025"}   # flags with no period or type
-            rec["status"] = ("UNVERIFIED" if any(v == "ERROR" for v in pa.values()) else
-                             "KNOWN" if set(pa) - weak else "NEW_CANDIDATE")
-            rows.append(rec)
-        if a.short_channel:
-            hit_ids = {r["source_id"] for r in rows}
-            sel = [(r, zi, f) for (k2, r), f, zi in zip(m.iterrows(), fs, m.zi.values)
-                   if f and f.get("chi2red", 0) > 2.5 and int(r.source_id) not in hit_ids]
+        try:
+            z = ztf_tile(tile, a.scratch)
+            g = gaia_tile(tile, a.cache)
+            tgt = g[g.vari_id.isna() & (g.phot_variable_flag != "VARIABLE") & (g.ruwe < 1.4)]
+            m = crossmatch(z, tgt)
+            zz = z.reset_index(drop=True)
+            io = np.array([cheap_stats(zz.t.iat[i], zz.m.iat[i], zz.e.iat[i]) for i in m.zi.values])
+            m = m[io >= cut]
+            jobs = [(zz.t.iat[i], zz.m.iat[i], zz.e.iat[i]) for i in m.zi.values]
+            from multiprocessing import Pool
             with Pool(a.workers) as pool:
-                sp = pool.map(short_period, [(zz.t.iat[zi], zz.m.iat[zi], zz.e.iat[zi],
-                                             f["period"] if f["log_fap"] < -5 else None) for r, zi, f in sel], chunksize=10)
-            for (r, zi, _), f in zip(sel, sp):
+                fs = pool.map(_feat, jobs, chunksize=20)
+            rows = []
+            for (k, r), f, zi in zip(m.iterrows(), fs, m.zi.values):
                 if not f:
                     continue
+                s = float(clf.predict_proba(pd.DataFrame([f])[SHAPE_FEATURES])[:, 1][0])
+                if s < thr or not (f["ls_pass"] or f["ecl_pass"]):
+                    continue
+                lc = pd.DataFrame(dict(mjd=zz.t.iat[zi], mag=zz.m.iat[zi], magerr=zz.e.iat[zi]))
+                ecl = f["ecl_pass"] and not f["ls_pass"]
+                per = float(f["ecl_period"] if ecl else f["period"])
+                tc = (temporal_consistency_ecl if ecl else temporal_consistency_lc)(lc, per)
+                if not tc["confirmed"]:
+                    continue
                 rec = dict(source_id=int(r.source_id), ra=r.ra, dec=r.dec, G=r.phot_g_mean_mag, bp_rp=r.bp_rp,
-                           ztf_objectid=int(zz.objectid.iat[zi]), score=np.nan, channel="short", period=f["period"],
-                           tile=tile["id"], amp=f["amp"], amp_over_err=f["amp_over_err"], log_fap=f["log_fap"],
-                           n=f["n"], span=f["span"], mean_mag=f["mean_mag"])
-                pa = prior_art(float(r.ra), float(r.dec), 5); nb = {}
+                           ztf_objectid=int(zz.objectid.iat[zi]), score=s, channel="eclipse" if ecl else "periodic",
+                           period=per, tile=tile["id"], **{k2: f[k2] for k2 in ("amp", "amp_over_err", "log_fap",
+                           "ecl_snr", "ecl_depth", "n", "span", "mean_mag", "skew")},
+                           early_period=tc["early_period"], late_period=tc["late_period"])
+                pa = prior_art(float(r.ra), float(r.dec), 5)
+                nb = {}   # 30-arcsec neighbour check runs later, in dossier.py, for vetted stars only
                 rec["prior_art"] = ";".join(sorted(pa)); rec["neighbour_30as"] = ";".join(sorted(nb))
-                weak = {"GaiaDR2_LAV_Mowlavi2021", "TESS_10k_unvetted", "YSO_Delfini2025"}
+                weak = {"GaiaDR2_LAV_Mowlavi2021", "TESS_10k_unvetted", "YSO_Delfini2025"}   # flags with no period or type
                 rec["status"] = ("UNVERIFIED" if any(v == "ERROR" for v in pa.values()) else
                                  "KNOWN" if set(pa) - weak else "NEW_CANDIDATE")
                 rows.append(rec)
-        if rows:
-            pd.DataFrame(rows).to_csv(out_p, mode="a", header=not os.path.exists(out_p), index=False)
-        st["done"].append(tile["id"]); st["scanned"] += len(tgt); st["scored"] += len(jobs)
-        json.dump(st, open(st_p, "w"))
-        os.remove(os.path.join(a.scratch, f"ztf_{tile['id']}.pkl"))
-        nnew = sum(r["status"] == "NEW_CANDIDATE" for r in rows)
-        print(f"  search tile {tile['id']} b={tile['b']:.1f}: {len(tgt)} Gaia-quiet, {len(jobs)} featurized, "
-              f"{len(rows)} confirmed hits, {nnew} new  ({time.time() - t0:.0f}s total)", flush=True)
+            if a.short_channel:
+                hit_ids = {r["source_id"] for r in rows}
+                sel = [(r, zi, f) for (k2, r), f, zi in zip(m.iterrows(), fs, m.zi.values)
+                       if f and f.get("chi2red", 0) > 2.5 and int(r.source_id) not in hit_ids]
+                with Pool(a.workers) as pool:
+                    sp = pool.map(short_period, [(zz.t.iat[zi], zz.m.iat[zi], zz.e.iat[zi],
+                                                 f["period"] if f["log_fap"] < -5 else None) for r, zi, f in sel], chunksize=10)
+                for (r, zi, _), f in zip(sel, sp):
+                    if not f:
+                        continue
+                    rec = dict(source_id=int(r.source_id), ra=r.ra, dec=r.dec, G=r.phot_g_mean_mag, bp_rp=r.bp_rp,
+                               ztf_objectid=int(zz.objectid.iat[zi]), score=np.nan, channel="short", period=f["period"],
+                               tile=tile["id"], amp=f["amp"], amp_over_err=f["amp_over_err"], log_fap=f["log_fap"],
+                               n=f["n"], span=f["span"], mean_mag=f["mean_mag"])
+                    pa = prior_art(float(r.ra), float(r.dec), 5); nb = {}
+                    rec["prior_art"] = ";".join(sorted(pa)); rec["neighbour_30as"] = ";".join(sorted(nb))
+                    weak = {"GaiaDR2_LAV_Mowlavi2021", "TESS_10k_unvetted", "YSO_Delfini2025"}
+                    rec["status"] = ("UNVERIFIED" if any(v == "ERROR" for v in pa.values()) else
+                                     "KNOWN" if set(pa) - weak else "NEW_CANDIDATE")
+                    rows.append(rec)
+            if rows:
+                pd.DataFrame(rows).to_csv(out_p, mode="a", header=not os.path.exists(out_p), index=False)
+            st["done"].append(tile["id"]); st["scanned"] += len(tgt); st["scored"] += len(jobs)
+            json.dump(st, open(st_p, "w"))
+            os.remove(os.path.join(a.scratch, f"ztf_{tile['id']}.pkl"))
+            nnew = sum(r["status"] == "NEW_CANDIDATE" for r in rows)
+            print(f"  search tile {tile['id']} b={tile['b']:.1f}: {len(tgt)} Gaia-quiet, {len(jobs)} featurized, "
+                  f"{len(rows)} confirmed hits, {nnew} new  ({time.time() - t0:.0f}s total)", flush=True)
+        except Exception as ex:   # a crash on one tile marks it failed and the shard moves on
+            import traceback; traceback.print_exc()
+            st.setdefault("failed", []).append(tile["id"])
+            if tile["id"] not in st["done"]:
+                st["done"].append(tile["id"])
+            json.dump(st, open(st_p, "w"))
+            zp = os.path.join(a.scratch, f"ztf_{tile['id']}.pkl")
+            if os.path.exists(zp):
+                os.remove(zp)
+            print(f"  tile {tile['id']} FAILED and skipped: {type(ex).__name__}: {str(ex)[:150]}", flush=True)
 
 
 if __name__ == "__main__":
