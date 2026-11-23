@@ -7,6 +7,18 @@ K=$1; N=$2; BUDGET_MIN=${3:-320}
 OUT=work/shard$K; mkdir -p $OUT cache scratch
 cp results/realsky1/model/{frozen.joblib,manifest.json,validation_report.json,val_features.parquet} $OUT/
 cp results/realsky1/model/search_state_seed.json $OUT/search_state.json
+# resume: mark every tile already finished by any earlier run as done, so repeated runs continue the sky
+URL0="https://x-access-token:${TOKEN}@github.com/${REPO}.git"
+if git clone -q --depth 1 --branch realsky-results "${URL_OVERRIDE:-$URL0}" prev 2>/dev/null; then
+  python - "$OUT/search_state.json" <<'PY'
+import json, glob, sys
+p = sys.argv[1]; s = json.load(open(p)); done = set(map(str, s["done"]))
+for f in glob.glob("prev/shards/*/*/search_state.json"):
+    done |= set(map(str, json.load(open(f))["done"]))
+s["done"] = [int(x) if x.isdigit() else x for x in sorted(done)]
+json.dump(s, open(p, "w")); print("resume: tiles already done", len(done))
+PY
+fi
 END=$(( $(date +%s) + BUDGET_MIN * 60 ))
 publish () {
   D=pub/shards/run${GITHUB_RUN_ID:-local}/shard$K
@@ -23,7 +35,7 @@ publish () {
 }
 while [ $(date +%s) -lt $(( END - 45 * 60 )) ]; do
   before=$(python -c "import json;print(len(json.load(open('$OUT/search_state.json'))['done']))")
-  python realsky.py search --out $OUT --cache cache --scratch scratch --shard $K --nshards $N --max-tiles 1 --hours 5 --workers 4 --extra-orders || break
+  python realsky.py search --out $OUT --cache cache --scratch scratch --shard $K --nshards $N --max-tiles 1 --hours 5 --workers 4 --extra-orders --short-channel --search-bmax 90 || break
   after=$(python -c "import json;print(len(json.load(open('$OUT/search_state.json'))['done']))")
   OUT=$OUT timeout 1200 python vet_pending.py
   OUT=$OUT timeout 1200 python dossier.py

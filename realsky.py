@@ -17,7 +17,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from eulerattack import features, SHAPE_FEATURES, hanley_se, wilson_upper, GATE, magnitude_match, fit
 
 HATS = "ipac-irsa-ztf/contributed/dr23/lc/hats/ztf_dr23_lc-hats"
-GAIA_TAP = "https://gea.esac.esa.int/tap-server/tap"
+GAIA_TAP = "https://gaia.ari.uni-heidelberg.de/tap"     # ARI Heidelberg partner centre: same gaiadr3 tables;
+GAIA_TAP_FALLBACK = "https://gea.esac.esa.int/tap-server/tap"   # ESA archive is down in the run-up to DR4
 SID_PER_PIX5 = 4 ** 7 * 2 ** 35
 NOT_STELLAR = {"AGN", "GALAXY", "MICROLENSING"}
 # Pre-registered 2026-11-22 from TRAINING tiles only, before any validation tile was featurized:
@@ -50,6 +51,24 @@ def order5_tiles(cache, bmin=15.0, bmax=90.0, dec_min=-25.0):
     out = pi[ok].assign(ra=c.ra.deg[ok], dec=c.dec.deg[ok], b=b[ok])
     return [dict(id=int(r.Npix), dir=int(r.Dir), ra=float(r.ra), dec=float(r.dec), b=float(r.b),
                  rows=int(r.num_rows)) for r in out.itertuples()]
+
+
+def high_latitude_tiles(cache, dec_min=-25.0):
+    """|b| > 35 deg at orders 4 and 5, outside the sealed training and validation band (|b| <= 35)."""
+    from astropy_healpix import HEALPix
+    from astropy.coordinates import SkyCoord
+    import astropy.units as u
+    pi = partition_info(cache); out = []
+    for k in (5, 4):
+        p = pi[pi.Norder == k]
+        lon, lat = HEALPix(nside=2 ** k, order="nested").healpix_to_lonlat(p.Npix.values)
+        c = SkyCoord(lon.to(u.deg), lat.to(u.deg)); b = np.abs(c.galactic.b.deg)
+        ok = (b > 35) & (c.dec.deg >= dec_min)
+        for r, ra, de, bb in zip(p[ok].itertuples(), c.ra.deg[ok], c.dec.deg[ok], b[ok]):
+            tid = int(r.Npix) if k == 5 else f"o{k}_{int(r.Npix)}"
+            out.append(dict(id=tid, order=k, npix=int(r.Npix), dir=int(r.Dir), ra=float(ra), dec=float(de),
+                            b=float(bb), rows=int(r.num_rows)))
+    return out
 
 
 def extra_order_tiles(cache, bmin=15.0, bmax=35.0, dec_min=-25.0):
@@ -118,12 +137,12 @@ def gaia_tile(tile, cache):
       LEFT JOIN gaiadr3.vari_classifier_result AS c ON c.source_id = g.source_id
       WHERE g.source_id BETWEEN {lo} AND {lo + span - 1}
       AND g.phot_g_mean_mag BETWEEN 13 AND 18.5"""
-    s = pyvo.dal.TAPService(GAIA_TAP)
-    for k in range(4):
+    for k in range(6):
         try:
-            d = s.run_sync(q, maxrec=2_000_000).to_table().to_pandas(); break
+            d = pyvo.dal.TAPService(GAIA_TAP if k % 2 == 0 else GAIA_TAP_FALLBACK).run_sync(
+                q, maxrec=2_000_000).to_table().to_pandas(); break
         except Exception as ex:
-            if k == 3:
+            if k == 5:
                 raise
             time.sleep(10 * (k + 1))
     for c in ("best_class_name", "phot_variable_flag"):
@@ -321,6 +340,41 @@ def run_train(a):
 
 
 # ----------------------------------------------------------------- search ---
+def short_period(args):
+    """Short-period channel (periods 20 min to 2.4 h), outside the trained detector's 0.1 d floor. A star is kept
+    when the periodogram peak is far beyond chance (log FAP < -10), the semi-amplitude is >= 4x the median error,
+    the frequency is not a whole number of cycles per day, and each half of the light curve recovers it."""
+    from astropy.timeseries import LombScargle
+    t, m, e = (np.asarray(x, float) for x in args[:3])
+    p_main = args[3] if len(args) > 3 else None     # significant long-period signal, if the main channel found one
+    if len(t) < 80:
+        return None
+    med = np.median(m); mad = 1.4826 * np.median(np.abs(m - med)) + 1e-6
+    k = np.abs(m - med) < 5 * mad + 3 * np.median(e); t, m, e = t[k], m[k], e[k]
+    ls = LombScargle(t, m, e)
+    f, p = ls.autopower(minimum_frequency=10.0, maximum_frequency=72.0, samples_per_peak=2, method="fast")
+    j = int(np.argmax(p)); f0 = f[j]
+    fap = ls.false_alarm_probability(p[j], minimum_frequency=10.0, maximum_frequency=72.0)
+    if not (fap < 1e-10) or abs(f0 - round(f0)) < 0.02:
+        return None
+    fg = np.linspace(f0 * 0.999, f0 * 1.001, 201); f0 = fg[np.argmax(ls.power(fg))]
+    amp = float(np.ptp(ls.model(np.linspace(0, 1 / f0, 50), f0)) / 2)
+    if amp / np.median(e) < 3:
+        return None
+    if p_main:   # reject harmonics of a longer period (e.g. P/3, P/4 of a contact binary)
+        r = p_main * f0
+        if any(abs(r - n / d) < 0.003 * r for d in (1, 2, 3) for n in range(1, 60)):
+            return None
+    o = np.argsort(t)
+    for half in np.array_split(o, 2):
+        lh = LombScargle(t[half], m[half], e[half]); fh = np.linspace(f0 * 0.995, f0 * 1.005, 401); ph = lh.power(fh)
+        if abs(fh[np.argmax(ph)] / f0 - 1) > 1e-3 or lh.false_alarm_probability(ph.max(), minimum_frequency=fh[0],
+                                                                                 maximum_frequency=fh[-1]) > 1e-3:
+            return None
+    return dict(period=float(1 / f0), log_fap=float(np.log10(max(fap, 1e-300))), amp=amp,
+                amp_over_err=float(amp / np.median(e)), n=int(len(t)), span=float(np.ptp(t)), mean_mag=float(med))
+
+
 def cheap_stats(t, m, e):
     q75, q25 = np.percentile(m, [75, 25])
     return (q75 - q25) / np.median(e)
@@ -342,7 +396,9 @@ def run_search(a):
     cut = float(np.quantile(va[va.label == 1].iqr_over_err, 0.05))   # keeps 95% of sealed positives
     if a.extra_orders:
         have = {t["id"] for t in man["search"]}
-        man["search"] = man["search"] + [t for t in extra_order_tiles(a.cache) if t["id"] not in have]
+        sealed = {t["id"] for t in man["train"] + man["validation"]}
+        extra = extra_order_tiles(a.cache) + (high_latitude_tiles(a.cache) if a.search_bmax > 35 else [])
+        man["search"] = man["search"] + [t for t in extra if t["id"] not in have and t["id"] not in sealed]
     seal = Seal(man, a.out); seal.phase = "search"
     st_p = os.path.join(a.out, "search_state.json")
     st = json.load(open(st_p)) if os.path.exists(st_p) else dict(done=[], scanned=0, scored=0)
@@ -390,12 +446,32 @@ def run_search(a):
                        "ecl_snr", "ecl_depth", "n", "span", "mean_mag", "skew")},
                        early_period=tc["early_period"], late_period=tc["late_period"])
             pa = prior_art(float(r.ra), float(r.dec), 5)
-            nb = prior_art(float(r.ra), float(r.dec), 30)
+            nb = {}   # 30-arcsec neighbour check runs later, in dossier.py, for vetted stars only
             rec["prior_art"] = ";".join(sorted(pa)); rec["neighbour_30as"] = ";".join(sorted(nb))
             weak = {"GaiaDR2_LAV_Mowlavi2021", "TESS_10k_unvetted", "YSO_Delfini2025"}   # flags with no period or type
             rec["status"] = ("UNVERIFIED" if any(v == "ERROR" for v in pa.values()) else
                              "KNOWN" if set(pa) - weak else "NEW_CANDIDATE")
             rows.append(rec)
+        if a.short_channel:
+            hit_ids = {r["source_id"] for r in rows}
+            sel = [(r, zi, f) for (k2, r), f, zi in zip(m.iterrows(), fs, m.zi.values)
+                   if f and f.get("chi2red", 0) > 2.5 and int(r.source_id) not in hit_ids]
+            with Pool(a.workers) as pool:
+                sp = pool.map(short_period, [(zz.t.iat[zi], zz.m.iat[zi], zz.e.iat[zi],
+                                             f["period"] if f["log_fap"] < -5 else None) for r, zi, f in sel], chunksize=10)
+            for (r, zi, _), f in zip(sel, sp):
+                if not f:
+                    continue
+                rec = dict(source_id=int(r.source_id), ra=r.ra, dec=r.dec, G=r.phot_g_mean_mag, bp_rp=r.bp_rp,
+                           ztf_objectid=int(zz.objectid.iat[zi]), score=np.nan, channel="short", period=f["period"],
+                           tile=tile["id"], amp=f["amp"], amp_over_err=f["amp_over_err"], log_fap=f["log_fap"],
+                           n=f["n"], span=f["span"], mean_mag=f["mean_mag"])
+                pa = prior_art(float(r.ra), float(r.dec), 5); nb = {}
+                rec["prior_art"] = ";".join(sorted(pa)); rec["neighbour_30as"] = ";".join(sorted(nb))
+                weak = {"GaiaDR2_LAV_Mowlavi2021", "TESS_10k_unvetted", "YSO_Delfini2025"}
+                rec["status"] = ("UNVERIFIED" if any(v == "ERROR" for v in pa.values()) else
+                                 "KNOWN" if set(pa) - weak else "NEW_CANDIDATE")
+                rows.append(rec)
         if rows:
             pd.DataFrame(rows).to_csv(out_p, mode="a", header=not os.path.exists(out_p), index=False)
         st["done"].append(tile["id"]); st["scanned"] += len(tgt); st["scored"] += len(jobs)
@@ -420,6 +496,7 @@ if __name__ == "__main__":
     ap.add_argument("--shard", type=int, default=0); ap.add_argument("--nshards", type=int, default=1)
     ap.add_argument("--max-tiles", type=int, default=10 ** 6)
     ap.add_argument("--extra-orders", action="store_true", help="also search order-4 and order-6 partitions")
+    ap.add_argument("--short-channel", action="store_true", help="also search 20 min - 2.4 h periods")
     a = ap.parse_args()
     os.makedirs(a.scratch, exist_ok=True)
     run_train(a) if a.cmd == "train" else run_search(a)

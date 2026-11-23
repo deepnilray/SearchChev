@@ -63,13 +63,18 @@ def prior_art(ra, dec, r_arcsec=5):
     v = vanroestel(ra, dec, r_arcsec)
     if v:
         hits["ZTF_eclipsingWD_vanRoestel"] = v
-    for name, src in CATS.items():
+    from concurrent.futures import ThreadPoolExecutor
+    def one(item):
+        name, src = item
         try:
             d = cone(src, ra, dec, r_arcsec)
-            if len(d):
-                hits[name] = d.iloc[0].to_dict()
-        except Exception as ex:
-            hits[name] = "ERROR"
+            return name, (d.iloc[0].to_dict() if len(d) else None)
+        except Exception:
+            return name, "ERROR"
+    with ThreadPoolExecutor(len(CATS)) as ex:        # all catalogues at once: ~10 s per star instead of minutes
+        for name, v in ex.map(one, CATS.items()):
+            if v is not None:
+                hits[name] = v
     return hits
 
 

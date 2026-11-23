@@ -5,3 +5,4 @@ smoke*/
 out*/
 *.joblib
 ztf_cache/
+cache/

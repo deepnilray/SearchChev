@@ -9,7 +9,7 @@ For each candidate:
 import sys, os, json, math
 import numpy as np, pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from realsky import HATS, GAIA_TAP
+from realsky import HATS, GAIA_TAP, GAIA_TAP_FALLBACK
 from varwise_gaia_hunt import lc_features
 
 
@@ -44,7 +44,13 @@ def gaia_neighbours(ra, dec, rad=15.0):
     import pyvo
     q = (f"SELECT source_id, ra, dec, phot_g_mean_mag, DISTANCE(POINT('ICRS',ra,dec),POINT('ICRS',{ra},{dec}))*3600 AS sep "
          f"FROM gaiadr3.gaia_source WHERE 1=CONTAINS(POINT('ICRS',ra,dec),CIRCLE('ICRS',{ra},{dec},{rad / 3600}))")
-    return pyvo.dal.TAPService(GAIA_TAP).run_sync(q).to_table().to_pandas().sort_values("sep")
+    import time
+    for k in range(5):
+        try:
+            return pyvo.dal.TAPService(GAIA_TAP if k % 2 == 0 else GAIA_TAP_FALLBACK).run_sync(q).to_table().to_pandas().sort_values("sep")
+        except Exception:
+            time.sleep(10 * (k + 1))
+    raise RuntimeError("Gaia TAP unavailable")
 
 
 def simbad(ra, dec, rad=10):
@@ -183,7 +189,7 @@ def vet(cands, tiles, outdir):
             rows = [r for r in lcs[i] if len(r["t"]) >= 40]
             per_lc = []
             for r in rows:
-                f = lc_features(r["t"], r["m"], r["e"])
+                f = lc_features(r["t"], r["m"], r["e"], fmax=max(10.0, 1.6 / c.period))
                 if f:
                     per_lc.append(dict(band=r["band"], field=r["field"], rcid=r["rcid"], n=len(r["t"]),
                                        period=f["period"], log_fap=f["log_fap"], amp=f["amp"],

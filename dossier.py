@@ -13,6 +13,7 @@ def _shares(r):
 if len(V):
     V["shares_period_in_tile"] = [_shares(r) for r in V.itertuples()]
     if "auto_grade" in V:
+        V["auto_flags"] = V["auto_flags"].fillna("").astype(object)
         V.loc[V.shares_period_in_tile, "auto_flags"] = V.loc[V.shares_period_in_tile, "auto_flags"].fillna("").astype(str) + "; shares period with another star in this tile"
         V.loc[V.shares_period_in_tile & V.auto_grade.isin(["A", "B"]), "auto_grade"] = "C"
 import sys as _s
