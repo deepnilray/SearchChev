@@ -4,7 +4,10 @@ CFA = "https://vizier.cfa.harvard.edu/viz-bin/asu-tsv"
 CATS = {"VSX": "B/vsx/vsx", "ZTF_Chen2020": "J/ApJS/249/18/table2", "ZTF_Chen2020_susp": "J/ApJS/249/18/table3",
         "ASASSN": "II/366/catv2021", "ATLAS_Heinze2018": "J/AJ/156/241/table4",
         "Gaia_DR3_vari": "I/358/vclassre", "TESS_EB": "J/ApJS/258/16/tess-ebs",
-        "TESS_10k_EB": "J/ApJS/279/50/table3", "TESS_10k_unvetted": "J/ApJS/279/50/table2"}
+        "TESS_10k_EB": "J/ApJS/279/50/table3", "TESS_10k_unvetted": "J/ApJS/279/50/table2",
+        "ZTF_ML_Arevalo2026": "J/A+A/705/A247", "GaiaDR2_LAV_Mowlavi2021": "J/A+A/648/A44",
+        "TESS_periods_Kounkel2022": "J/AJ/164/137", "GaiaDR3_rotation": "I/358/vrm", "GaiaDR3_EB": "I/358/veb",
+        "WISE_var_Chen2018": "J/ApJS/237/28", "CRTS_Drake2014": "J/ApJS/213/9", "YSO_Delfini2025": "J/A+A/699/A145"}
 
 MIRRORS = ["https://vizier.cfa.harvard.edu/viz-bin/asu-tsv", "https://vizier.idia.ac.za/viz-bin/asu-tsv"]
 
