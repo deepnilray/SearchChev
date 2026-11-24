@@ -33,7 +33,7 @@ NAME_RX = re.compile(r"^([A-Za-z]+)_(\d+)-(\d+)\.(csv|ecsv|parquet|fits|vot)(\.g
 GAIA_T0_JD = 2455197.5
 SOURCE_COLS = ["source_id", "ra", "dec", "parallax", "parallax_error", "pmra", "pmdec", "phot_g_mean_mag", "bp_rp",
                "ruwe", "phot_variable_flag", "duplicated_source", "ipd_frac_multi_peak", "phot_bp_rp_excess_factor",
-               "phot_g_n_obs", "non_single_star"]
+               "phot_g_n_obs", "non_single_star", "phot_variable_score"]
 # Epoch-photometry column candidates; DR4 names may differ, so every role lists alternatives.
 EPOCH_ROLES = {
     "sid": ["source_id"],
@@ -44,10 +44,12 @@ EPOCH_ROLES = {
     "bp_t": ["bp_obs_time", "bp_transit_time", "time_bp"], "bp_m": ["bp_mag", "bp_transit_mag", "mag_bp"],
     "rp_t": ["rp_obs_time", "rp_transit_time", "time_rp"], "rp_m": ["rp_mag", "rp_transit_mag", "mag_rp"],
     "rej": ["variability_flag_g_reject", "rejected_by_variability"], "rejp": ["rejected_by_photometry"],
+    "g_nobs": ["g_n_obs"],                 # DR4: AF CCDs (0-9) behind the transit-averaged G flux
     # long format (one row per transit and band)
     "time": ["obs_time", "time", "transit_time"], "mag": ["mag"], "snr": ["flux_over_error"],
     "flux": ["flux"], "flux_err": ["flux_error"], "band": ["band", "passband"],
 }
+G_MIN_CCD = 5         # DR4 has no per-transit rejection flag for non-variables; need >= 5 of 9 AF CCDs
 G_MAX = 20.5          # brightest-decile G; the catalogue mean is not used, since a star dimmed by an event reads faint
 PHASES = (("train", 8), ("validation", 4), ("search", 88))
 
@@ -117,8 +119,11 @@ def read_table(path, cols=None, chunksize=None):
     """csv / ecsv (# comment header) / parquet, gzipped or not; only `cols` that exist are read."""
     if path.endswith(".parquet"):
         import pyarrow.parquet as pq
-        have = pq.ParquetFile(path).schema.names
-        return pd.read_parquet(path, columns=[c for c in (cols or have) if c in have])
+        pf = pq.ParquetFile(path); have = pf.schema_arrow.names
+        use = [c for c in (cols or have) if c in have]
+        if chunksize:
+            return (b.to_pandas() for b in pf.iter_batches(batch_size=chunksize, columns=use))
+        return pf.read(columns=use).to_pandas()
     with (gzip.open(path, "rt") if path.endswith(".gz") else open(path)) as fh:
         for line in fh:
             if not line.startswith("#"):
@@ -129,6 +134,9 @@ def read_table(path, cols=None, chunksize=None):
 
 
 def epoch_header(path):
+    if path.endswith(".parquet"):
+        import pyarrow.parquet as pq
+        return pq.ParquetFile(path).schema_arrow.names
     with (gzip.open(path, "rt") if path.endswith(".gz") else open(path)) as fh:
         for line in fh:
             if not line.startswith("#"):
@@ -143,12 +151,16 @@ def resolve(header):
 
 # ------------------------------------------------------------------ light curves ------------------------
 def _arr(s):
+    if isinstance(s, (list, tuple, np.ndarray)):
+        return np.array([np.nan if v is None else v for v in s], float)
     if not isinstance(s, str) or len(s) < 3:
         return np.empty(0)
     return np.fromstring(s.strip()[1:-1].replace("null", "nan").replace('"', ""), sep=",")
 
 
 def _barr(s, n):
+    if isinstance(s, (list, tuple, np.ndarray)):
+        a = np.array([bool(v) for v in s]); return a if a.size == n else np.zeros(n, bool)
     if not isinstance(s, str) or len(s) < 3:
         return np.zeros(n, bool)
     a = np.array([v.strip().lower() == "true" for v in s.strip()[1:-1].split(",")])
@@ -158,7 +170,7 @@ def _barr(s, n):
 def light_curves(path, min_points=15):
     """Yield (source_id, dict band -> (t_bjd, mag, magerr)). Handles wide (array per source) and long layouts."""
     header = epoch_header(path); R = resolve(header)
-    if R["g_t"] and (R["g_m"] or R["g_f"]):
+    if R["g_t"] and (R["g_m"] or R["g_f"]) and not _per_transit(path, R):
         cols = [c for c in {R[k] for k in ("sid", "g_t", "g_m", "g_snr", "g_f", "g_fe", "bp_t", "bp_m", "rp_t", "rp_m",
                                            "rej", "rejp")} if c]
         for chunk in read_table(path, cols, chunksize=4000):
@@ -190,6 +202,8 @@ def light_curves(path, min_points=15):
                 if "G" in out:
                     yield int(row[R["sid"]]), out
         return
+    if R["g_t"] and (R["g_m"] or R["g_f"]):                    # DR4 data model: one row per FoV transit, all bands
+        yield from _per_transit_curves(path, R, min_points); return
     if R["time"] and (R["mag"] or R["flux"]):                                 # long format
         d = read_table(path, [c for c in {R[k] for k in ("sid", "time", "mag", "snr", "flux", "flux_err", "band")} if c])
         d = d.rename(columns={R["sid"]: "sid", R["time"]: "t"})
@@ -212,6 +226,59 @@ def light_curves(path, min_points=15):
                 yield int(sid), out
         return
     raise RuntimeError("UNKNOWN_EPOCH_SCHEMA: " + ",".join(header[:80]))
+
+
+def _per_transit(path, R):
+    """True when the G time column holds one scalar per row (DR4 draft data model, epoch_photometry 11.1)
+    rather than one array per source (DR3 bulk files)."""
+    first = next(iter(read_table(path, [R["g_t"]], chunksize=50)))
+    v = first[R["g_t"]].dropna()
+    if v.empty:
+        return False
+    x = v.iloc[0]
+    if isinstance(x, (list, tuple, np.ndarray)) or (isinstance(x, str) and x.strip().startswith("[")):
+        return False
+    return True
+
+
+def _per_transit_curves(path, R, min_points):
+    """Group per-transit rows by source. Rows are read in chunks; a source split across chunks is carried over."""
+    roles = ("sid", "g_t", "g_m", "g_snr", "g_f", "g_fe", "g_nobs", "bp_t", "bp_m", "rp_t", "rp_m")
+    cols = [R[k] for k in roles if R[k]]
+    num = lambda d, k: pd.to_numeric(d[R[k]], errors="coerce").values if R[k] else None
+    carry = None
+    def emit(d):
+        sid = int(d[R["sid"]].iat[0]); out = {}
+        t = num(d, "g_t")
+        m = num(d, "g_m") if R["g_m"] else None
+        if m is None:
+            f = num(d, "g_f"); m = np.where(f > 0, -2.5 * np.log10(np.where(f > 0, f, 1)) + 25.6874, np.nan)
+        snr = num(d, "g_snr") if R["g_snr"] else num(d, "g_f") / num(d, "g_fe")
+        ok = np.isfinite(t) & np.isfinite(m) & np.isfinite(snr) & (snr > 0)
+        if R["g_nobs"]:
+            ok &= num(d, "g_nobs") >= G_MIN_CCD
+        if ok.sum() >= min_points:
+            o = np.argsort(t[ok]); out["G"] = ((t[ok] + GAIA_T0_JD)[o], m[ok][o], (1.0857 / snr[ok])[o])
+        for b in ("bp", "rp"):
+            if R[f"{b}_t"] and R[f"{b}_m"]:
+                tb, mb = num(d, f"{b}_t"), num(d, f"{b}_m"); okb = np.isfinite(tb) & np.isfinite(mb)
+                if okb.sum() >= min_points:
+                    o = np.argsort(tb[okb]); out[b.upper()] = ((tb[okb] + GAIA_T0_JD)[o], mb[okb][o], None)
+        return sid, out
+    for chunk in read_table(path, cols, chunksize=200000):
+        if carry is not None:
+            chunk = pd.concat([carry, chunk], ignore_index=True)
+        last = chunk[R["sid"]].iat[-1]
+        tail = chunk[R["sid"]] == last
+        carry, body = chunk[tail], chunk[~tail]
+        for _, g in body.groupby(R["sid"], sort=False):
+            sid, out = emit(g)
+            if "G" in out:
+                yield sid, out
+    if carry is not None and len(carry):
+        sid, out = emit(carry)
+        if "G" in out:
+            yield sid, out
 
 
 # ------------------------------------------------------------------ features ----------------------------
@@ -346,7 +413,7 @@ def stellar(F):
 
 def _rank(c):
     """Unflagged (unknown) stars first, then by score."""
-    c["known_variable"] = c.flagged_variable.fillna(False)
+    c["known_variable"] = c.flagged_variable.fillna(False) | (c.possible_variable.fillna(False) if "possible_variable" in c else False)
     return c.sort_values(["known_variable", "score"], ascending=[True, False])
 
 
@@ -403,13 +470,25 @@ def source_table(files, release):
     s["source_id"] = s.source_id.astype("int64")
     num = [c for c in SOURCE_COLS if c not in ("source_id", "phot_variable_flag", "duplicated_source")]
     s[num] = s[num].apply(pd.to_numeric, errors="coerce")
-    s["flagged_variable"] = s.phot_variable_flag.astype(str).str.upper().eq("VARIABLE")
-    if "vsum" in files:
+    flag = s.phot_variable_flag.astype(str).str.upper()
+    s["flagged_variable"] = flag.eq("VARIABLE")
+    s["possible_variable"] = flag.eq("POSSIBLE")        # DR4 adds POSSIBLE; DR3 had only VARIABLE / NOT_AVAILABLE
+    if "vsum" in files and release == "gdr3":
+        # DR3 vari_summary lists only variables (10.5 M). DR4 vari_summary (403 M rows) lists every source the
+        # variability pipeline processed, so membership there means nothing about variability and is not used.
         v = read_table(files["vsum"], ["source_id"]); s["flagged_variable"] |= s.source_id.isin(v.source_id.astype("int64"))
     s["gaia_class"] = ""
     if "vcls" in files:
-        v = read_table(files["vcls"], ["source_id", "best_class_name", "best_class_score"])
-        v["source_id"] = v.source_id.astype("int64"); v = v.drop_duplicates("source_id")
+        # DR3: best_class_name/best_class_score, one row per source. DR4: one row per classifier with
+        # classifier_best_class_name/classifier_best_class_prob; keep the most probable class over classifiers.
+        v = read_table(files["vcls"], ["source_id", "best_class_name", "best_class_score",
+                                        "classifier_best_class_name", "classifier_best_class_prob"])
+        if "classifier_best_class_name" in v:
+            v = v.rename(columns={"classifier_best_class_name": "best_class_name",
+                                  "classifier_best_class_prob": "best_class_score"})
+        v["source_id"] = v.source_id.astype("int64")
+        v["best_class_score"] = pd.to_numeric(v.get("best_class_score"), errors="coerce")
+        v = v.sort_values("best_class_score", ascending=False).drop_duplicates("source_id")
         s = s.merge(v[["source_id", "best_class_name"]], on="source_id", how="left")
         s["gaia_class"] = s.best_class_name.fillna("").astype(str); s = s.drop(columns="best_class_name")
     # neighbours inside the same range: brighter star within 3" or any within 1.5" can fake variability
@@ -501,12 +580,14 @@ def process_range(rng, files, release, out, keep_lc=True, model=None):
                                 **{str(s): np.vstack(lcs[s]) for s in c.source_id if s in lcs})
     # compact sample for the 'missed' classifier: every flagged star (capped) and 3x as many unflagged, train/val only
     if res["phase"] in ("train", "validation"):
-        pos = F[F.flagged_variable.fillna(False)]; neg = F[~F.flagged_variable.fillna(False)]
+        pos = F[F.flagged_variable.fillna(False)]
+        neg = F[~F.flagged_variable.fillna(False) & ~F.possible_variable.fillna(False)]
         smp = pd.concat([pos.sample(min(len(pos), 400), random_state=0), neg.sample(min(len(neg), 1200), random_state=0)])
         smp.to_parquet(os.path.join(d, "sample.parquet"))
     else:
         # search files: keep features of unflagged stars that vary at all, for scoring by the frozen model
-        unf = clean[~clean.flagged_variable.fillna(False) & ((clean.chi2red > 2.5) | (clean.iqr_over_err > 2))]
+        unf = clean[~clean.flagged_variable.fillna(False) & ~clean.possible_variable.fillna(False) &
+                    ((clean.chi2red > 2.5) | (clean.iqr_over_err > 2))]
         res["unflagged_varying"] = len(unf)
         if model is not None and len(unf):
             sc = model["model"].predict_proba(missed_matrix(unf))[:, 1]
@@ -523,6 +604,19 @@ def process_range(rng, files, release, out, keep_lc=True, model=None):
 
 def run(a):
     ranges = discover(a.release, a.cache)
+    if not ranges:
+        # The draft DR4 data model (June 2026) says bulk files are Parquet in the DATAMODEL_GAIA layout, but the file
+        # naming is not published. Record what is there so the layout can be adapted, and stop without searching.
+        os.makedirs(a.out, exist_ok=True)
+        try:
+            sample = list_keys(f"Gaia/{a.release}/")[:400]
+        except Exception as ex:
+            sample = [f"listing failed: {ex}"]
+        open(os.path.join(a.out, "SCHEMA_ALERT.txt"), "w").write(
+            f"NO_RANGES: no <Product>_<first>-<last> files under Gaia/{a.release}/ on {BUCKET}\n" + "\n".join(sample))
+        if os.path.exists(os.path.join(a.cache, f"ranges_{a.release}.json")):
+            os.remove(os.path.join(a.cache, f"ranges_{a.release}.json"))
+        raise SystemExit("NO_RANGES: see SCHEMA_ALERT.txt")
     keys = sorted(ranges)
     mine = [r for i, r in enumerate(keys) if i % a.nshards == a.shard]
     done = set()

@@ -77,3 +77,13 @@ drafting reviews it as a hostile referee, and every point is fixed before Deepni
 * **Freeze time:** if SCoPe finishes after 12:00, the freeze moves to SCoPe completion + 1 h; the Zenodo package
   still goes out Friday 27.
 * **Anything else that changes what is claimed:** stop and ask Deepnil.
+
+
+## Amendment after reading the DR4 draft data model (24 Nov, before the freeze; no rule above is changed)
+
+- The advance DR4 prediction is scored against `phot_variable_flag` in its three DR4 values (VARIABLE,
+  POSSIBLE, NON_VARIABLE), `phot_variable_score`, the per-classifier `vari_classifier_result` rows, and the
+  periods in the specific `vari_*` tables. Success measures are fixed for each of the three flag values separately.
+- Stars are matched DR3 → DR4 through `dr3_neighbourhood`, never by equal `source_id`; a 1" position match is
+  the fallback and is reported as such.
+- Details and code changes: DR4_ENGINE.md, section "Checked against the official draft DR4 data model".
