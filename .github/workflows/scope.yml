@@ -1,0 +1,29 @@
+name: scope-index
+# Builds a compact prior-art index of the ZTF SCoPe variable catalogue (Healy et al. 2024, Zenodo 8410826):
+# one job per ZTF field, output on branch scope-index as scope_<field>.csv.gz. Start by hand (branch dr4-engine).
+on: {workflow_dispatch: {}}
+jobs:
+  field:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions: {contents: write}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        field: [295,296,297,298,422,423,424,425,486,487,488,489,561,562,563,564,681,682,683,684,698,699,700,701,716,717,718,719,776,777,778,779,840,841,842,843,851,852,853,854]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.13", cache: pip}
+      - run: pip install pandas requests
+      - run: python scope_index.py ${{ matrix.field }} scope_${{ matrix.field }}.csv.gz
+      - env: {TOKEN: "${{ github.token }}"}
+        run: |
+          URL="https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
+          for try in 1 2 3 4 5 6 7 8; do
+            rm -rf pub; git clone -q --depth 1 --branch scope-index "$URL" pub 2>/dev/null || { mkdir pub && cd pub && git init -q && git checkout -q -b scope-index && git remote add origin "$URL" && cd ..; }
+            cp scope_${{ matrix.field }}.csv.gz pub/; cd pub; git add -A
+            git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "SCoPe field ${{ matrix.field }}" || exit 0
+            git push -q origin HEAD:scope-index && exit 0; cd ..; sleep $(( RANDOM % 30 + 5 ))
+          done; exit 1
