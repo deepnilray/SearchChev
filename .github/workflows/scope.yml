@@ -1,6 +1,6 @@
 name: scope-index
-# Builds a compact prior-art index of the ZTF SCoPe variable catalogue (Healy et al. 2024, Zenodo 8410826):
-# one job per ZTF field, output on branch scope-index as scope_<field>.csv.gz. Start by hand (branch dr4-engine).
+# Builds a compact prior-art index of the ZTF SCoPe catalogue, latest version (Zenodo 20057104: 1.65 billion light
+# curves in 636 fields): one job per zip bundle, output on branch scope-index as scope_<bundle>.parquet. Start by hand (branch dr4-engine).
 on: {workflow_dispatch: {}}
 jobs:
   field:
@@ -11,19 +11,19 @@ jobs:
       fail-fast: false
       max-parallel: 20
       matrix:
-        field: [295,296,297,298,422,423,424,425,486,487,488,489,561,562,563,564,681,682,683,684,698,699,700,701,716,717,718,719,776,777,778,779,840,841,842,843,851,852,853,854]
+        bundle: ["01_00","02_01","03_02","04_03","05_04","06_05","07_06","08_07","09_08","10_09","11_10","12_11","13_12","14_13","15_14","16_15","17_16","18_17","19_18","20_19","21_20","22_21","23_22","24_23"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.13", cache: pip}
-      - run: pip install pandas requests
-      - run: python scope_index.py ${{ matrix.field }} scope_${{ matrix.field }}.csv.gz
+      - run: pip install pandas pyarrow requests
+      - run: python scope_index.py ${{ matrix.bundle }} scope_${{ matrix.bundle }}.parquet
       - env: {TOKEN: "${{ github.token }}"}
         run: |
           URL="https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
           for try in 1 2 3 4 5 6 7 8; do
             rm -rf pub; git clone -q --depth 1 --branch scope-index "$URL" pub 2>/dev/null || { mkdir pub && cd pub && git init -q && git checkout -q -b scope-index && git remote add origin "$URL" && cd ..; }
-            cp scope_${{ matrix.field }}.csv.gz pub/; cd pub; git add -A
-            git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "SCoPe field ${{ matrix.field }}" || exit 0
+            cp scope_${{ matrix.bundle }}.parquet pub/; cd pub; git add -A
+            git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "SCoPe bundle ${{ matrix.bundle }}" || exit 0
             git push -q origin HEAD:scope-index && exit 0; cd ..; sleep $(( RANDOM % 30 + 5 ))
           done; exit 1
