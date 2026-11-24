@@ -81,4 +81,4 @@ VARIABLE, 10 POSSIBLE and the AGN class from a two-classifier DR4 table; `proces
 * AIP mirror: epoch photometry served as a TAP table; 600 DR3 sources in 21.8 s (about 27 sources/s); keep IN lists
   at about 200 IDs. AIP announces complete DR4 including epoch data from 2 Dec 2026. **First route on release day.**
 * ARI mirror: anonymous async jobs stay QUEUED; use sync.
-* Release-day pipeline code (targets, fetch via DataLink or AIP TAP, parser, preflight): /home/claude/occ/dr4day/.
+* Release-day pipeline code (targets, fetch via DataLink or AIP TAP, parser, preflight): /home/claude/occ/dr4day/ in the session workspace (not in git).

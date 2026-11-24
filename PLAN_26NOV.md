@@ -92,7 +92,7 @@ drafting reviews it as a hostile referee, and every point is fixed before Deepni
 
 - **SCoPe check, method fixed.** Done on 788 of 2,287 A/B candidates with four v1.1.2 bundles (results: 87.3% KNOWN
   under R3.3, 11.8% in SCoPe with a different period or class, 0.9% absent). On 26 Nov the same reader
-  (`/home/claude/scopecheck/idx.py`, no vnv filter, Gaia column `Gaia_EDR3___id`, ZTF fields taken from each
+  (`scopecheck/idx.py` in this branch, no vnv filter, Gaia column `Gaia_EDR3___id`, ZTF fields taken from each
   dossier's `detail` JSON) is applied to every frozen candidate, bundle by bundle (about 56 GB at ~3 MB/s, so start
   at the freeze; scope.yml on GitHub only after the search has released the runners).
 - **New output: selection function.** After the search ends, run the same detector on Gaia-*flagged* stars in a
@@ -101,4 +101,4 @@ drafting reviews it as a hostile referee, and every point is fixed before Deepni
   bins 12-19); Wilson intervals; DR4 refit on release.
 - **DR4 access.** AIP TAP (epoch tables as ordinary tables, ~27 sources/s in a DR3 test) is the first route; ESA
   DataLink (50 IDs per request anonymous; account "dray" for 5,000) is the backup.
-- **RNAAS draft** ready at /home/claude/rnaas/ (placeholders: blue = freeze numbers, red = DR4).
+- **RNAAS draft** ready at `paper/searchchev_rnaas.tex` in this branch (needs aastex701.cls) (placeholders: blue = freeze numbers, red = DR4).
