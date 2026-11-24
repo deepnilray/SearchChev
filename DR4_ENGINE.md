@@ -72,3 +72,13 @@ Tests run on 24 Nov: a synthetic file written exactly in the draft-model columns
 groups so sources straddle chunks) gives 300/300 light curves with the right point counts after the `g_n_obs`
 cut; the same data written in the DR3 array layout gives identical G light curves; `source_table()` returns 10
 VARIABLE, 10 POSSIBLE and the AGN class from a two-classifier DR4 table; `process_range()` runs end to end.
+
+
+## Access test (24 Nov 2026, DR3 services)
+
+* ESA DataLink without login: hard cap of 50 source_ids per request; about 2.9 s per source (1.25 sources/s with 3
+  workers). The `RAW` data structure now returns HTTP 500 ("use DATAMODEL_GAIA").
+* AIP mirror: epoch photometry served as a TAP table; 600 DR3 sources in 21.8 s (about 27 sources/s); keep IN lists
+  at about 200 IDs. AIP announces complete DR4 including epoch data from 2 Dec 2026. **First route on release day.**
+* ARI mirror: anonymous async jobs stay QUEUED; use sync.
+* Release-day pipeline code (targets, fetch via DataLink or AIP TAP, parser, preflight): /home/claude/occ/dr4day/.
