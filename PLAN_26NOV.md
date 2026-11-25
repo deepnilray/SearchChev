@@ -102,3 +102,8 @@ drafting reviews it as a hostile referee, and every point is fixed before Deepni
 - **DR4 access.** AIP TAP (epoch tables as ordinary tables, ~27 sources/s in a DR3 test) is the first route; ESA
   DataLink (50 IDs per request anonymous; account "dray" for 5,000) is the backup.
 - **RNAAS draft** ready at `paper/searchchev_rnaas.tex` in this branch (needs aastex701.cls) (placeholders: blue = freeze numbers, red = DR4).
+
+## Amendment 3 (25 Nov, after meeting Prof. Seshadri)
+Prof. Seshadri reviewed the project and said the method matters more than the individual stars.
+All write-ups (RNAAS note, Zenodo description, full paper) therefore lead with the method and the
+variability selection function; the list of new stars is a secondary result. Plan PDF sent to him on 25 Nov.
