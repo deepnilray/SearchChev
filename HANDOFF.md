@@ -26,7 +26,7 @@ than individual stars: lead every write-up with the method and the "what Gaia mi
 - `searchchev_v1_zenodo.zip` (rebuilt 27 Nov after the area correction; SHA-256 in `freeze/ZENODO_ZIP_SHA256`) and
   `zenodo_v1/ZENODO_FORM.md` (field-by-field). Deepnil uploads it himself under his ORCID. NOT yet uploaded.
 - Preprint: `paper/preprint/searchchev_preprint.tex/.pdf` (8 pages, AASTeX701 twocolumn; needs aastex701.cls,
-  epsf.sty, ulem.sty in the same folder). Only blank: Zenodo DOI ("DOI to be added"). Post on Preprints.org
+  epsf.sty, ulem.sty in the same folder). Zenodo DOI reserved: 10.5281/zenodo.24579691 (draft record zenodo.org/uploads/24579691; NOT yet published) and already in the preprint and RNAAS note. Post on Preprints.org
   (Physical Sciences -> Astronomy and Astrophysics) after the DOI is in. One preprint server only.
 - RNAAS note for 2 Dec: `paper/searchchev_rnaas.tex` (red \dr{} placeholders = DR4 numbers; free, no APC).
 - Two-page summary for Seshadri + email: draft in Deepnil's Ashoka Gmail (not sent; he sends it).
