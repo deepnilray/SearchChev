@@ -1,0 +1,67 @@
+name: denominator
+# Selection-function denominator for SearchChev (pre-registered 24 Nov 2026, PLAN_26NOV.md Amendment 2).
+# Runs the frozen search detector, unchanged, on Gaia-DR3-flagged variables in a seeded 10% of completed sky
+# partitions (freeze/denominator_tiles.json on branch dr4-engine). Code and model come from branch realsky-validation,
+# exactly as the search uses them. Results go to branch denom-results after every run; the run restarts itself until
+# every sampled partition is done. It does not read or write anything the search uses.
+on: {workflow_dispatch: {}}
+concurrency: {group: denominator, cancel-in-progress: false}
+jobs:
+  shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions: {contents: write}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: realsky-validation}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.13", cache: pip}
+      - run: pip install -r requirements-realsky.txt
+      - name: Fetch the denominator script and the tile sample from dr4-engine
+        run: |
+          git fetch -q --depth 1 origin dr4-engine
+          git show FETCH_HEAD:denom.py > denom.py
+          git show FETCH_HEAD:freeze/denominator_tiles.json > denominator_tiles.json
+      - name: Resume, run, publish
+        env: {TOKEN: "${{ github.token }}"}
+        run: |
+          K=${{ matrix.shard }}; OUT=work/denom$K; mkdir -p $OUT cache scratch
+          URL="https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
+          if git clone -q --depth 1 --branch denom-results "$URL" prev 2>/dev/null; then
+            [ -f prev/shard$K/denom_state.json ] && cp prev/shard$K/denom_state.json prev/shard$K/denom_rows.csv $OUT/ 2>/dev/null || true
+          fi
+          timeout 320m python denom.py --out $OUT --shard $K --nshards 20 --tiles denominator_tiles.json --hours 4.8 --workers 4 || echo "denom exited non-zero"
+          for try in 1 2 3 4 5 6 7 8; do
+            rm -rf pub; git clone -q --depth 1 --branch denom-results "$URL" pub 2>/dev/null || { mkdir pub && cd pub && git init -q && git checkout -q -b denom-results && git remote add origin "$URL" && cd ..; }
+            mkdir -p pub/shard$K; cp $OUT/denom_state.json $OUT/denom_rows.csv pub/shard$K/ 2>/dev/null
+            cd pub; git add -A
+            git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "denominator shard $K" || exit 0
+            git push -q origin HEAD:denom-results && exit 0; cd ..; sleep $(( RANDOM % 30 + 5 ))
+          done; exit 1
+  next:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {actions: write, contents: read}
+    steps:
+      - name: Restart if sampled partitions remain
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          git clone -q --depth 1 --branch dr4-engine "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" eng
+          git clone -q --depth 1 --branch denom-results "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" res || exit 0
+          LEFT=$(python3 - <<'PY'
+          import json, glob
+          want = set(map(str, json.load(open("eng/freeze/denominator_tiles.json"))))
+          done = set()
+          for f in glob.glob("res/shard*/denom_state.json"):
+              done |= set(map(str, json.load(open(f))["done"]))
+          print(len(want - done))
+          PY
+          )
+          echo "sampled partitions remaining: $LEFT"
+          if [ "$LEFT" -gt 0 ]; then gh workflow run denominator.yml -R "${{ github.repository }}"; fi
