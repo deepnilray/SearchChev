@@ -39,7 +39,13 @@ for tid in want:
     if tid in st["done"] or time.time() - t0 > a.hours * 3600:
         continue
     tile = alltiles[tid]
-    z = ztf_tile(tile, a.scratch); g = gaia_tile(tile, a.cache)
+    try:
+        z = ztf_tile(tile, a.scratch); g = gaia_tile(tile, a.cache)
+    except Exception as ex:
+        att = st.setdefault("attempts", {}); att[tid] = att.get(tid, 0) + 1
+        if att[tid] >= 2:
+            st["done"].append(tid); st.setdefault("skipped", []).append(tid)
+        json.dump(st, open(st_p, "w")); print(f"denom tile {tid}: data error {ex!r}", flush=True); continue
     flagged = g[(g.vari_id.notna() | (g.phot_variable_flag == "VARIABLE")) & (g.ruwe < 1.4)]
     m = crossmatch(z, flagged); zz = z.reset_index(drop=True)
     io = np.array([cheap_stats(zz.t.iat[i], zz.m.iat[i], zz.e.iat[i]) for i in m.zi.values]) if len(m) else np.array([])
