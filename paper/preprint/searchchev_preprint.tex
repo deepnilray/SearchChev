@@ -12,8 +12,8 @@ with a pre-registered prediction for Gaia DR4}
 
 \begin{abstract}
 Gaia DR3 published variability results for about 10.5 million sources and none for the rest of its 1.8 billion. I
-searched Zwicky Transient Facility (ZTF) DR23 light curves of 13.9 million stars that DR3 left without any
-variability result, over 9,400 deg$^2$ at Galactic latitude $|b|\ge15^\circ$. The detector was trained, its threshold
+scored Zwicky Transient Facility (ZTF) DR23 light curves of 13.9 million stars that DR3 left without any
+variability result, over 10,700 deg$^2$ at Galactic latitude $|b|\ge15^\circ$. The detector was trained, its threshold
 fixed and its performance measured on sky tiles sealed before any search data were opened (AUC 0.954; false-positive
 rate 0.23\%). Every candidate had to show the same period in at least two independent ZTF light curves and stay
 stable season by season. The search yields 5,778 periodic variables. The ZTF SCoPe classifications, built
@@ -50,15 +50,19 @@ before DR4 appears. This paper describes the method, the census and the predicti
 
 \section{Data}
 \subsection{Targets}
-I selected Gaia DR3 sources with no entry in \texttt{vari\_summary}, \texttt{phot\_variable\_flag} not equal to
-VARIABLE, and RUWE $<1.4$, at $|b|\ge15^\circ$ and $\delta\ge-25^\circ$. The sky was divided into HATS order-5
-HEALPix tiles (3.36 deg$^2$ each). At the catalogue freeze, 2,796 tiles (about 9,400 deg$^2$) had been searched; they
-contain 40.4 million such stars, of which 13.9 million have ZTF light curves with enough epochs to be scored.
+I selected Gaia DR3 sources with $13\le G\le18.5$, no entry in \texttt{vari\_summary},
+\texttt{phot\_variable\_flag} not equal to VARIABLE, and RUWE $<1.4$, at $|b|\ge15^\circ$ and $\delta\ge-25^\circ$. The
+sky was divided into the HEALPix partitions of the ZTF HATS archive (orders 4, 5 and 6; 13.4, 3.36 and 0.84 deg$^2$).
+At the catalogue freeze, 2,796 partitions (136, 2,646 and 14 of the three orders; 10,700 deg$^2$) had been searched.
+They contain 40.4 million such stars. Of these, 13.9 million have an $r$-band light curve with at least 60 good epochs
+and enough scatter to pass a pre-filter that keeps 95\% of known variables in the sealed validation set, and were
+scored by the detector.
 
 \subsection{Light curves}
-ZTF DR23 PSF-photometry light curves in $g$, $r$ and $i$ were read from the IRSA HATS archive and cross-matched to Gaia
-DR3 positions. A star typically has several light curves (different fields, CCD quadrants and filters); these are
-kept separate so that each can confirm the others independently.
+ZTF DR23 PSF-photometry light curves were read from the IRSA HATS archive and cross-matched to Gaia DR3 positions
+within $1.5''$, keeping epochs with no quality flag. The detector runs on the star's $r$-band light curve.
+Vetting then uses every $g$, $r$ and $i$ light curve of the star (different fields, CCD quadrants and filters), kept
+separate so that each can confirm the others independently.
 
 \section{Method}
 \subsection{Detector}
@@ -70,19 +74,22 @@ to a score.
 \subsection{Sealed validation}
 Before any light curve was downloaded, a seeded manifest assigned every tile to training, validation or search. The
 classifier was trained on Gaia DR3 classified variables (positives) and Gaia-quiet stars (negatives) from training
-tiles only, and its threshold was set from out-of-fold scores on training data. Both were then frozen, and only then
+tiles only (positives restricted to classes ZTF can see: eclipsing, RR Lyrae, Cepheid, long-period, RS CVn, young
+stellar and cataclysmic variables), and its threshold was set from out-of-fold scores on training data. Both were then frozen, and only then
 were the validation tiles opened, once. On 356 Gaia-classified variables and 4,000 Gaia-quiet stars in the validation
 tiles the classifier reached AUC 0.954 (lower 95\% bound 0.939), against 0.494 for a shuffled-label control. The full
-search rule has a false-positive rate of 0.23\% (upper 95\% bound 0.43\%) on quiet stars; this is itself an upper limit,
+search rule has a false-positive rate of 0.23\% (upper 95\% bound 0.43\%) on quiet stars, and it recovers 63\% of the sealed Gaia variables. The false-positive rate is itself an upper limit,
 because some of those ``negatives'' are unrecognised variables of exactly the kind this search is designed to find.
 
 \subsection{Vetting rules}
 A star that passes the detector becomes a candidate only if (i) its period is recovered in at least two independent ZTF
-light curves; (ii) the period is detected in at least half of the observing seasons tested; (iii) the period is away from
-sampling aliases (0.5, 1 and 2 d and the lunar month); and (iv) no brighter Gaia star lies within $6''$,
-and none two magnitudes brighter within $12''$. Stars meeting all four are graded A or B; any warning flag (uneven phase
-coverage, a period shared with other stars in the same tile) moves a star to grade C, which is never claimed. Only
-grades A and B are used below.
+light curves; (ii) the period is detected in at least half (and at least two) of the observing seasons tested;
+(iii) neither the period nor twice it lies within 1\% of a sampling alias (1/3, 1/2, 1 and 2 d, half and one lunar
+month, half and one year); (iv) for periods above 1 d, the phases are evenly covered; and (v) no brighter Gaia star
+lies within $6''$, and none two magnitudes brighter within $12''$. A star failing any of these, or sharing its period
+with other stars in the same tile, is graded C and never claimed. The others are graded A (amplitude $\ge0.08$ mag
+with at least three agreeing light curves in both $g$ and $r$, or amplitude $\ge0.15$ mag with two) or B. Only grades A
+and B are used below.
 
 \subsection{Pre-registered decision rules}
 The rules that decide what is claimed were committed publicly on 24 November 2026, before the catalogue was frozen
@@ -111,9 +118,9 @@ as the 5--95\% range of the light curve, have a median of 0.12 mag (Figure~\ref{
 \tablecaption{Census at the catalogue freeze (27 November 2026, 03:45 UTC).\label{tab:res}}
 \tablehead{\colhead{Quantity} & \colhead{Value}}
 \startdata
-Sky tiles searched ($|b|\ge15^\circ$) & 2,796 (9,400 deg$^2$) \\
-Gaia-DR3-quiet stars in those tiles & 40.4 million \\
-\quad with ZTF light curves, scored & 13.9 million \\
+Sky partitions searched ($|b|\ge15^\circ$) & 2,796 (10,700 deg$^2$) \\
+Gaia-DR3-quiet stars, $13\le G\le18.5$ & 40.4 million \\
+\quad scored by the detector & 13.9 million \\
 Validated A/B periodic variables & 5,778 \\
 \quad in SCoPe as variable, matching class or period & 5,000 (86.8\%) \\
 \quad in SCoPe below its variable threshold & 676 (11.7\%) \\
