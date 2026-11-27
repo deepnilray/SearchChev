@@ -1,0 +1,143 @@
+\documentclass[twocolumn]{aastex701}
+\begin{document}
+
+
+\title{Variable stars hidden from Gaia DR3: a ZTF census with a pre-registered prediction for Gaia DR4}
+
+\author[0000-0001-8779-0700]{Deepnil Ray}
+\affiliation{Ashoka University, Sonipat, Haryana 131029, India}
+\email{deepnilray_ug2025@ashoka.edu.in}
+\affiliation{The NoRCEL Institute, United Kingdom}
+
+\begin{abstract}
+Gaia DR3 published variability results for about 10.5 million sources and none for the rest. I searched ZTF DR23
+light curves of 13.9 million stars that DR3 left without any variability result, using a detector frozen and
+validated on sky tiles sealed before any data were opened (AUC 0.954; false-positive rate 0.23\%). The search yields
+5,778 periodic variables confirmed in independent light curves and stable season by season; the ZTF SCoPe
+classifications already list 86.8\% of them as variable, an independent confirmation that the detections are real.
+Thirty-two stars are listed as variable in no published catalogue and pass sky-image and light-curve checks; they
+are new variables, including three detached eclipsing binaries (orbital periods 1.89, 3.02 and 25.4 d). Before Gaia
+DR4 (2 December 2026) I fix and publish a prediction of what DR4 will report for these stars against matched
+controls, turning DR4 into an independent test of the method and a measurement of which variables Gaia misses.
+\end{abstract}
+
+\keywords{Variable stars (1761) --- Sky surveys (1464) --- Astronomy data analysis (1858)}
+
+\section{Motivation}
+Gaia's sparse sampling, set by its scanning law, leaves real variables unflagged, but how many, and of which
+periods and amplitudes, has not been measured; \citet{Everall2022} describe a selection function for Gaia's
+variable samples as ``hugely valuable'' and note that building one requires knowing which sources Gaia would have
+classified as variable had they been variable. A census of real variables among stars Gaia called quiet answers
+that question directly. Testing such a census against the next release, with the prediction fixed in advance,
+makes the answer verifiable.
+
+\section{Data and method}
+I selected Gaia DR3 stars with no \texttt{vari\_summary} row, not flagged as variable, and RUWE $<1.4$, at
+$|b|\ge15^\circ$ and $\delta\ge-25^\circ$, and read their ZTF DR23 light curves from the IRSA HATS archive. A
+seeded manifest assigned every HEALPix tile to training, validation or search before any download. A gradient-boosted
+classifier on light-curve shape features (Lomb--Scargle power and false-alarm probability, amplitude over error,
+reduced $\chi^2$, skewness, von Neumann ratio and an eclipse box-fit channel) was frozen before the validation tiles
+were opened. On 356 Gaia-classified variables and 4,000 Gaia-quiet stars in those tiles it reached AUC 0.954
+(lower 95\% bound 0.939; shuffled-label control 0.494). The full search rule has a false-positive rate of 0.23\%
+(upper bound 0.43\%), itself an upper limit because some ``negatives'' are unrecognised variables. Every candidate
+had to recover its period in at least two independent ZTF light curves, in at least half of the seasons tested,
+away from sampling aliases, with no brighter Gaia star within $6''$. Only grades A and B are used.
+
+\section{Results}
+Table~\ref{tab:res} summarises the census. Prior art was checked against VSX, SIMBAD, ALeRCE, 17 VizieR catalogues
+and the latest SCoPe release \citep{Healy2024}, which covers 5,760 of the 5,778 stars. SCoPe lists 86.8\% as variable
+with a matching class or period, independently confirming that the detections are real; it lists 11.7\% below its
+own variability threshold and 1.5\% are absent from it. Ninety stars are listed as variable in no catalogue. Each
+was inspected on Pan-STARRS1 images and its light curve by eye: two are blends and were dropped; 32 were held back
+because of a possible blend, a known variable within $30''$ whose light may contaminate the ZTF photometry, or ZTF
+magnitudes inconsistent with Gaia; 24 have light curves too weak to claim. The remaining 32 are new variable stars
+(Table~\ref{tab:new}). They include three detached eclipsing binaries, one with a 25.4-d orbit, and two contact
+binaries near 0.25--0.29 d. The ZTF DR1 variable candidates of \citet{Ofek2020} could not be checked and are a stated limitation.
+
+\begin{deluxetable}{lc}
+\tablecaption{Census of Gaia-DR3-quiet variables at the catalogue freeze (27 November 2026, 03:45 UTC).\label{tab:res}}
+\tablehead{\colhead{Quantity} & \colhead{Value}}
+\startdata
+Sky tiles searched ($|b|\ge15^\circ$) & 2,796 (9,400 deg$^2$) \\
+Gaia-DR3-quiet stars with ZTF light curves & 13.9 million \\
+Validated A/B periodic variables & 5,778 \\
+\quad in SCoPe as variable, matching class or period & 5,000 (86.8\%) \\
+\quad in SCoPe below its variable threshold & 676 (11.7\%) \\
+\quad absent from SCoPe & 84 (1.5\%) \\
+Listed as variable in no catalogue & 90 \\
+\quad new variables (clear light curve) & 32 \\
+\enddata
+\end{deluxetable}
+
+\section{Prediction for Gaia DR4}
+The following is fixed before DR4 appears; the files and their hashes are in the Zenodo record.
+(P1) Among stars matched through DR4's \texttt{dr3\_neighbourhood} table, DR4 flags a larger fraction of the 5,778
+candidates as VARIABLE than of 550 control stars matched in position (within $0.5^\circ$), $G$ ($\pm0.25$) and
+$G_{BP}-G_{RP}$ ($\pm0.15$), at $z>3.3$. (P2) DR4 G-band light curves show the ZTF period (factors 0.5, 1 or 2, within 1\%)
+with false-alarm probability $<10^{-3}$ more often for candidates than for controls tested at their paired period.
+(P3) Among candidates, the DR4 VARIABLE fraction rises with amplitude and falls for faint stars and periods beyond
+$\sim$10 d, measured in bins fixed now (8 in $\log P$ over 0.05--500 d, 5 in amplitude, 1-mag bins in $G$ from 12 to 19).
+No target fraction is set; the outcome will be reported whatever it is.
+
+\section{Discussion}
+A census fixed before a data release and then tested by it is a strong check that the detections are real. The
+stars DR4 still fails to flag will define where Gaia's variability detection is blind, the input a variability
+selection function needs \citep{Everall2022}. The DR4 result and the full selection function in period, amplitude,
+magnitude and scanning-law coverage will follow in a forthcoming paper.
+
+\startlongtable
+\begin{deluxetable*}{lrrrrrc}
+\tablecaption{The 32 new variable stars. $P$ is the orbital period for EA/EW systems; for the others it is the ZTF
+period, and the true period may be twice it. Amp.\ is the ZTF $r$-band amplitude.\label{tab:new}}
+\tablehead{\colhead{Gaia DR3 source\_id} & \colhead{RA (deg)} & \colhead{Dec (deg)} & \colhead{$G$} & \colhead{$P$ (d)} & \colhead{Amp.} & \colhead{Type}}
+\startdata
+220985864201130880 & 52.68684 & +33.99985 & 16.77 & 0.34235 & 0.16 & -- \\
+144104918810873600 & 44.90387 & +41.50692 & 14.67 & 0.48126 & 0.09 & -- \\
+3212111109018082688 & 77.52603 & -4.16784 & 17.02 & 0.80700 & 0.13 & -- \\
+1115128064441569152 & 101.55789 & +74.76635 & 16.31 & 0.80815 & 0.15 & -- \\
+4542539793743461376 & 262.44965 & +13.98629 & 16.50 & 0.81948 & 0.11 & -- \\
+1198491283713804928 & 241.74909 & +16.51748 & 17.12 & 1.89020 & 0.16 & EA \\
+1052374297278903936 & 158.41634 & +63.36611 & 16.56 & 3.02409 & 0.13 & EA \\
+568272281191898240 & 57.94509 & +81.48817 & 14.97 & 6.26475 & 0.13 & -- \\
+321766687685841536 & 19.20328 & +36.97374 & 15.27 & 22.02554 & 0.14 & -- \\
+346276760375634816 & 31.08684 & +42.72787 & 16.32 & 25.44693 & 0.08 & EA \\
+1737667592423979520 & 313.02030 & +7.58462 & 18.10 & 0.24313 & 0.19 & -- \\
+4230919197495489024 & 306.25634 & +1.40315 & 18.10 & 0.24756 & 0.16 & EW \\
+883343449870017152 & 107.85309 & +26.40558 & 17.11 & 0.28981 & 0.12 & EW \\
+905894192835199744 & 122.34616 & +35.11849 & 18.32 & 0.39661 & 0.32 & -- \\
+2091030666583675776 & 279.85317 & +32.80090 & 18.07 & 0.48658 & 0.18 & -- \\
+392034654752728064 & 5.22944 & +46.50365 & 17.52 & 0.56810 & 0.16 & -- \\
+1788985957620546432 & 318.80600 & +19.85998 & 17.48 & 0.58055 & 0.16 & -- \\
+2140005873718290688 & 290.79697 & +54.26231 & 15.42 & 0.78431 & 0.07 & -- \\
+4475953030265090560 & 268.22324 & +7.72803 & 17.14 & 0.84516 & 0.16 & -- \\
+370109740058043776 & 18.90870 & +38.88437 & 17.12 & 0.91009 & 0.13 & -- \\
+4586091900291068672 & 273.41947 & +26.89792 & 16.85 & 0.97166 & 0.09 & -- \\
+385049354301256704 & 0.29195 & +44.66341 & 17.00 & 1.20782 & 0.13 & -- \\
+4536646724957687168 & 276.53158 & +24.82873 & 16.64 & 1.28410 & 0.08 & -- \\
+2269181859866703232 & 272.11790 & +75.81729 & 17.06 & 2.53832 & 0.12 & -- \\
+309225245742174464 & 21.69344 & +29.75539 & 16.70 & 2.92022 & 0.10 & -- \\
+3229653954478382208 & 71.87815 & -0.96564 & 13.33 & 4.33721 & 0.06 & -- \\
+2298065927249128704 & 306.26974 & +80.75639 & 17.38 & 4.84942 & 0.12 & -- \\
+165986334076500096 & 63.54724 & +30.73295 & 17.05 & 5.44164 & 0.15 & -- \\
+3204803754739717888 & 67.16010 & -3.26040 & 14.29 & 6.41849 & 0.11 & -- \\
+1273135410136152960 & 233.89113 & +29.72690 & 13.76 & 6.72214 & 0.12 & -- \\
+4584902503592643200 & 276.03126 & +26.00164 & 18.45 & 10.39817 & 0.17 & -- \\
+340135777480090112 & 39.24818 & +42.95679 & 17.03 & 10.90664 & 0.10 & -- \\
+\enddata
+\end{deluxetable*}
+
+\section*{Data availability}
+The frozen catalogue, the pre-registered prediction and the code are archived on Zenodo (DOI to be added; deposited 27 November 2026) and at \url{https://github.com/deepnilray/SearchChev}.
+
+\begin{acknowledgments}
+This work used ZTF data (IRSA) and data from the ESA mission Gaia, processed by the Gaia DPAC. Software development
+and analysis were assisted by an AI system (Claude, Anthropic); all results were checked by the author.
+\end{acknowledgments}
+
+\begin{thebibliography}{}
+\bibitem[Everall \& Boubert(2022)]{Everall2022} Everall, A., \& Boubert, D. 2022, MNRAS, 509, 6205
+\bibitem[Healy et al.(2024)]{Healy2024} Healy, B. F., et al. 2024, ApJS, 272, 14
+\bibitem[Ofek et al.(2020)]{Ofek2020} Ofek, E. O., et al. 2020, MNRAS, 499, 5782
+\end{thebibliography}
+
+\end{document}
