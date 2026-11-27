@@ -1,7 +1,7 @@
 \documentclass[RNAAS]{aastex701}
 % ---------------------------------------------------------------------------------------------
 % RELEASE-DAY TEMPLATE. Every \dr{...} marks a number filled in after the Gaia DR4 analysis
-% (2 December 2026). Every \fz{...} marks a number fixed at the catalogue freeze (26 November).
+% (2 December 2026). Every \fz{...} marks a number fixed at the catalogue freeze (27 November, 03:45 UTC; N_new is set when the SCoPe check of all 5,778 candidates finishes, before DR4).
 % Remove the two macros' highlighting before submission. Limit: 1,500 words incl. references,
 % abstract <= 150 words, one table, first person singular.
 % ---------------------------------------------------------------------------------------------
@@ -20,12 +20,12 @@
 
 \begin{abstract}
 Gaia DR3 published variability results for about 10.5 million sources and none for the rest. I searched
-\fz{890,000} stars that DR3 left without any variability result, using Zwicky Transient Facility (ZTF) DR23 light
+\fz{13.9 million} stars that DR3 left without any variability result, using Zwicky Transient Facility (ZTF) DR23 light
 curves and a detector validated on sky tiles sealed before any data were opened (AUC 0.954; false-positive rate
-0.23\%). The search yields \fz{2,287} periodic variables confirmed in independent light curves and stable season by
+0.23\%). The search yields \fz{5,778} periodic variables confirmed in independent light curves and stable season by
 season. Before Gaia DR4 appeared, I deposited the catalogue and a dated prediction of which stars DR4 would flag.
 DR4 flags \dr{X\%} of them as variable against \dr{Y\%} of matched controls, and agrees with my period for
-\dr{Z\%}. \fz{20} stars appear in no published catalogue, including the ZTF SCoPe classifications; these are new
+\dr{Z\%}. \fz{N\_new} stars appear in no published catalogue, including the ZTF SCoPe classifications; these are new
 variables. The sample measures directly which real variables Gaia's pipeline misses.
 \end{abstract}
 
@@ -55,23 +55,23 @@ away from sampling aliases, with no brighter Gaia star within $6''$. Only grades
 Table~\ref{tab:res} summarises the census and its test. Prior art was checked against VSX, SIMBAD, ALeRCE, 17
 VizieR catalogues and the latest SCoPe release \citep{Healy2024}. SCoPe already flags most candidates as
 variable, independently confirming that the detections are real; for \fz{11.8\%} SCoPe's period or class disagrees
-with mine, and \fz{0.9\%} are absent from SCoPe altogether. The \fz{20} stars absent from every catalogue are new
+with mine, and \fz{0.9\%} are absent from SCoPe altogether. The \fz{N\_new} stars absent from every catalogue are new
 variable stars and are being reported to VSX.
 
 On 2 December 2026, Gaia DR4 \citep{GaiaDR4} classified the frozen stars as follows: \dr{N\_VAR} VARIABLE,
-\dr{N\_POS} POSSIBLE and \dr{N\_NON} NON\_VARIABLE, compared with \dr{control fractions} for the low-scoring
-control list. DR4 periods match mine (within 1\%, allowing factors of 0.5 and 2) for \dr{fraction}. Of the \fz{20}
+\dr{N\_POS} POSSIBLE and \dr{N\_NON} NON\_VARIABLE, compared with \dr{control fractions} for the matched
+control list. DR4 periods match mine (within 1\%, allowing factors of 0.5 and 2) for \dr{fraction}. Of the \fz{N\_new}
 new variables, DR4 flags \dr{n}.
 
 \begin{deluxetable}{lc}
 \tablecaption{Census of Gaia-DR3-quiet variables and its test against Gaia DR4.\label{tab:res}}
 \tablehead{\colhead{Quantity} & \colhead{Value}}
 \startdata
-Gaia-DR3-quiet stars searched in ZTF & \fz{890,000} \\
-Validated A/B periodic variables & \fz{2,287} \\
+Gaia-DR3-quiet stars searched in ZTF & \fz{13.9 million} \\
+Validated A/B periodic variables & \fz{5,778} \\
 \quad already in SCoPe with matching class or period & \fz{87.3\%} \\
 \quad in SCoPe with different period or class & \fz{11.8\%} \\
-\quad in no catalogue (new) & \fz{20} \\
+\quad in no catalogue (new) & \fz{N\_new} \\
 Flagged VARIABLE or POSSIBLE by Gaia DR4 & \dr{X\%} \\
 Control stars flagged by Gaia DR4 & \dr{Y\%} \\
 DR4 period agrees with ZTF period & \dr{Z\%} \\

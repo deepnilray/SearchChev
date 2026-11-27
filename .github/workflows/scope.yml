@@ -1,29 +1,33 @@
 name: scope-index
-# Builds a compact prior-art index of the ZTF SCoPe catalogue, latest version (Zenodo 20057104: 1.65 billion light
-# curves in 636 fields): one job per zip bundle, output on branch scope-index as scope_<bundle>.parquet. Start by hand (branch dr4-engine).
+# SCoPe prior-art check of the frozen SearchChev catalogue (Healy et al. 2024; latest release, Zenodo 20057104).
+# One job per bundle; each writes idx_<bundle>.parquet to branch scope-index. Run from branch dr4-engine
+# (gh workflow run scope.yml --ref dr4-engine) only when the realsky search is not using the runners.
 on: {workflow_dispatch: {}}
 jobs:
-  field:
+  bundle:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     permissions: {contents: write}
     strategy:
       fail-fast: false
-      max-parallel: 20
+      max-parallel: 12
       matrix:
         bundle: ["01_00","02_01","03_02","04_03","05_04","06_05","07_06","08_07","09_08","10_09","11_10","12_11","13_12","14_13","15_14","16_15","17_16","18_17","19_18","20_19","21_20","22_21","23_22","24_23"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: "3.13", cache: pip}
-      - run: pip install pandas pyarrow requests
-      - run: python scope_index.py ${{ matrix.bundle }} scope_${{ matrix.bundle }}.parquet
+        with: {python-version: "3.13"}
+      - run: pip install pandas pyarrow
+      - run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc || true
+          until curl -sSL --fail -C - -o b.zip "https://zenodo.org/api/records/20057104/files/${{ matrix.bundle }}_fields.zip/content"; do sleep 10; done
+          CAND=freeze/catalogue_v1_raw.csv python -I scopecheck/idx.py b.zip idx_${{ matrix.bundle }}.parquet
       - env: {TOKEN: "${{ github.token }}"}
         run: |
           URL="https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
           for try in 1 2 3 4 5 6 7 8; do
             rm -rf pub; git clone -q --depth 1 --branch scope-index "$URL" pub 2>/dev/null || { mkdir pub && cd pub && git init -q && git checkout -q -b scope-index && git remote add origin "$URL" && cd ..; }
-            cp scope_${{ matrix.bundle }}.parquet pub/; cd pub; git add -A
+            cp idx_${{ matrix.bundle }}.parquet pub/; cd pub; git add -A
             git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "SCoPe bundle ${{ matrix.bundle }}" || exit 0
             git push -q origin HEAD:scope-index && exit 0; cd ..; sleep $(( RANDOM % 30 + 5 ))
           done; exit 1

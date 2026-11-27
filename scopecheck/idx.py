@@ -1,8 +1,11 @@
 import sys,io,zipfile,json,glob
 sys.path.insert(0,'/home/claude/searchchev')
 import pandas as pd, pyarrow as pa, pyarrow.parquet as pq, pyarrow.compute as pc
-d=pd.concat([pd.read_csv(f) for f in glob.glob('/tmp/rr/shards/*/*/dossier.csv')]).drop_duplicates('source_id')
-d=d[d.auto_grade.isin(['A','B'])]
+import os
+if os.environ.get('CAND'): d=pd.read_csv(os.environ['CAND'],usecols=['source_id'])
+else:
+    d=pd.concat([pd.read_csv(f) for f in glob.glob('/tmp/rr/shards/*/*/dossier.csv')]).drop_duplicates('source_id')
+    d=d[d.auto_grade.isin(['A','B'])]
 ids=pa.array(d.source_id.astype('int64').values)
 SKIP={"vnv","pnp"}
 z=zipfile.ZipFile(sys.argv[1]);parts=[]
