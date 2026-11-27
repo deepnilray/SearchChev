@@ -1,7 +1,7 @@
 \documentclass[RNAAS]{aastex701}
 % ---------------------------------------------------------------------------------------------
 % RELEASE-DAY TEMPLATE. Every \dr{...} marks a number filled in after the Gaia DR4 analysis
-% (2 December 2026). Every \fz{...} marks a number fixed at the catalogue freeze (27 November, 03:45 UTC; N_new is set when the SCoPe check of all 5,778 candidates finishes, before DR4).
+% (2 December 2026). Every \fz{...} marks a number fixed at the catalogue freeze (27 November 2026, 03:45 UTC; SCoPe check of all candidates completed 05:35 UTC).
 % Remove the two macros' highlighting before submission. Limit: 1,500 words incl. references,
 % abstract <= 150 words, one table, first person singular.
 % ---------------------------------------------------------------------------------------------
@@ -25,7 +25,7 @@ curves and a detector validated on sky tiles sealed before any data were opened 
 0.23\%). The search yields \fz{5,778} periodic variables confirmed in independent light curves and stable season by
 season. Before Gaia DR4 appeared, I deposited the catalogue and a dated prediction of which stars DR4 would flag.
 DR4 flags \dr{X\%} of them as variable against \dr{Y\%} of matched controls, and agrees with my period for
-\dr{Z\%}. \fz{N\_new} stars appear in no published catalogue, including the ZTF SCoPe classifications; these are new
+\dr{Z\%}. \fz{32} stars are listed as variable in no published catalogue, including the ZTF SCoPe classifications; these are new
 variables. The sample measures directly which real variables Gaia's pipeline misses.
 \end{abstract}
 
@@ -54,13 +54,13 @@ away from sampling aliases, with no brighter Gaia star within $6''$. Only grades
 \section{Results}
 Table~\ref{tab:res} summarises the census and its test. Prior art was checked against VSX, SIMBAD, ALeRCE, 17
 VizieR catalogues and the latest SCoPe release \citep{Healy2024}. SCoPe already flags most candidates as
-variable, independently confirming that the detections are real; for \fz{11.8\%} SCoPe's period or class disagrees
-with mine, and \fz{0.9\%} are absent from SCoPe altogether. The \fz{N\_new} stars absent from every catalogue are new
+variable, independently confirming that the detections are real; for \fz{11.7\%} SCoPe lists the star below its own variability threshold or with a different period and class
+and \fz{1.5\%} are absent from SCoPe altogether. The \fz{32} stars that no catalogue lists as variable (31 absent from SCoPe, one scored non-variable by it) and that pass a sky-image and light-curve check are new
 variable stars and are being reported to VSX.
 
 On 2 December 2026, Gaia DR4 \citep{GaiaDR4} classified the frozen stars as follows: \dr{N\_VAR} VARIABLE,
 \dr{N\_POS} POSSIBLE and \dr{N\_NON} NON\_VARIABLE, compared with \dr{control fractions} for the matched
-control list. DR4 periods match mine (within 1\%, allowing factors of 0.5 and 2) for \dr{fraction}. Of the \fz{N\_new}
+control list. DR4 periods match mine (within 1\%, allowing factors of 0.5 and 2) for \dr{fraction}. Of the \fz{32}
 new variables, DR4 flags \dr{n}.
 
 \begin{deluxetable}{lc}
@@ -69,9 +69,9 @@ new variables, DR4 flags \dr{n}.
 \startdata
 Gaia-DR3-quiet stars searched in ZTF & \fz{13.9 million} \\
 Validated A/B periodic variables & \fz{5,778} \\
-\quad already in SCoPe with matching class or period & \fz{87.3\%} \\
-\quad in SCoPe with different period or class & \fz{11.8\%} \\
-\quad in no catalogue (new) & \fz{N\_new} \\
+\quad already in SCoPe with matching class or period & \fz{86.8\%} \\
+\quad in SCoPe below its known-variable threshold & \fz{11.7\%} \\
+\quad in no catalogue (new) & \fz{32} \\
 Flagged VARIABLE or POSSIBLE by Gaia DR4 & \dr{X\%} \\
 Control stars flagged by Gaia DR4 & \dr{Y\%} \\
 DR4 period agrees with ZTF period & \dr{Z\%} \\

@@ -29,16 +29,23 @@ Deepnil Ray (ORCID 0000-0001-8779-0700). Frozen 27 November 2026, 03:45 UTC, bef
 | Gaia-DR3-quiet stars in those tiles | 40.4 million |
 | Of these, with ZTF light curves and scored | 13.9 million |
 | Grade A/B periodic variables (this catalogue) | 5,778 (A 3,210, B 2,568) |
-| Known in VizieR, SIMBAD or ALeRCE | 529 |
-| Checked against SCoPe so far | 788 |
-| of which in SCoPe as variable with matching class or period | 688 (87.3%) |
-| of which in SCoPe with a different period or class | 93 (11.8%) |
-| of which absent from SCoPe | 7 (0.9%) |
-| New variables that passed every check, including sky images | 3 |
+| Checked against SCoPe (the other 18 lie in ZTF fields SCoPe does not cover; not claimed) | 5,760 |
+| in SCoPe as variable with matching class or period | 5,000 (86.8%) |
+| in SCoPe below its known-variable threshold | 676 (11.7%) |
+| absent from SCoPe | 84 (1.5%) |
+| Known in VSX, VizieR, SIMBAD, ALeRCE or SCoPe (any) | 5,053 |
+| Not known anywhere and absent from SCoPe or scored non-variable by it | 90 |
+| of which dropped or held back on sky images or contamination checks | 34 |
+| of which with a clear light curve: **new variable stars** | **32** |
+| of which with a low-amplitude light curve: candidates, not claimed | 24 |
 
-The SCoPe check of the other 4,990 stars is in progress (the SCoPe release is 68 GB). Its results, and the new
-variables among those stars, will be added as version 1.1 of this record before 2 December 2026. The search
-itself continues on further sky tiles for version 2.
+Contamination checks applied to the 90 before claiming: a blend or galaxy on Pan-STARRS1 images (dropped); a known
+variable within 30 arcsec, or ZTF photometry more than 0.5 mag brighter than Gaia G with BP-RP missing (held back as
+uncertain). Stars 10-25 arcsec from a saturated star are kept and flagged. Every light curve was then inspected by
+eye; only those with a coherent shape well above the scatter in both bands are claimed.
+
+The 676 stars that SCoPe lists below its threshold are reported as independently recovered with a first vetted
+period, never as discoveries.
 
 Ofek et al. (2020) ZTF DR1 periodic candidates were not checked (the catalogue could not be obtained); this is a
 stated limitation.
@@ -46,8 +53,10 @@ stated limitation.
 ## Files
 
 * `catalogue_v1.csv`: the 5,778 frozen candidates with all prior-art columns.
-* `new_variables_v1.csv`: the stars that passed every check, with light-curve plots in `lightcurves/`.
-* `image_check.csv` and `image_check_v1_sheet.png`: the sky-image verdicts.
+* `new_variables_v1.csv`: the 32 new variable stars, with light-curve plots in `lightcurves/`.
+* `low_amplitude_candidates_v1.csv`: 24 further stars that passed every catalogue and image check but whose light
+  curves are too weak to claim.
+* `image_check.csv` and `image_sheets/`: the sky-image and light-curve verdicts for all 90 stars.
 * `dr4_prediction/`: the advance prediction for Gaia DR4, its control list and scoring script.
 * `code_snapshot.zip`: the code at the freeze commit.
 * `SHA256SUMS`: hashes of every file.
