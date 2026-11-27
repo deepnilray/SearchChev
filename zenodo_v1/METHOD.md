@@ -5,7 +5,8 @@ Deepnil Ray (ORCID 0000-0001-8779-0700). Frozen 27 November 2026, 03:45 UTC, bef
 ## Method
 
 1. **Targets.** Gaia DR3 stars with no variability result (`phot_variable_flag = NOT_AVAILABLE`, no `vari_*`
-   entry) and RUWE < 1.4, in HATS order-5 sky tiles at Galactic latitude |b| >= 15 deg.
+   entry), RUWE < 1.4 and 13 <= G <= 18.5, in the HEALPix partitions (orders 4-6) of the ZTF HATS archive at
+   Galactic latitude |b| >= 15 deg and declination >= -25 deg.
 2. **Light curves.** ZTF DR23 g, r and i light curves, cross-matched to Gaia DR3.
 3. **Detector.** A gradient-boosted classifier on light-curve shape features plus Lomb-Scargle and eclipse
    searches. Its threshold and training were frozen on 22 November 2026 before any search tile was
@@ -25,9 +26,9 @@ Deepnil Ray (ORCID 0000-0001-8779-0700). Frozen 27 November 2026, 03:45 UTC, bef
 
 | Quantity | Value |
 |---|---|
-| Sky tiles completed | 2,796 (about 9,400 deg2) |
+| Sky partitions completed | 2,796 (about 10,700 deg2) |
 | Gaia-DR3-quiet stars in those tiles | 40.4 million |
-| Of these, with ZTF light curves and scored | 13.9 million |
+| Of these, scored by the detector (r-band light curve with >= 60 good epochs, passing the pre-filter) | 13.9 million |
 | Grade A/B periodic variables (this catalogue) | 5,778 (A 3,210, B 2,568) |
 | Checked against SCoPe (the other 18 lie in ZTF fields SCoPe does not cover; not claimed) | 5,760 |
 | in SCoPe as variable with matching class or period | 5,000 (86.8%) |

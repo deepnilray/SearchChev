@@ -10,7 +10,7 @@ Go to zenodo.org, log in with your ORCID, click **New upload**, then:
 6. **Description** (paste):
 
    A search of Zwicky Transient Facility DR23 light curves for periodic variability in Gaia DR3 stars that DR3 left
-   without any variability result. In 2,796 sky tiles (about 9,400 square degrees at Galactic latitude above 15
+   without any variability result. In 2,796 sky partitions (about 10,700 square degrees at Galactic latitude above 15
    degrees), 13.9 million such stars were scored by a detector whose threshold was frozen and validated on sealed
    tiles before the search. 5,778 stars pass every vetting rule (period recovered in at least two independent ZTF
    light curves, stable season to season, no brighter neighbour). The record contains the frozen catalogue with

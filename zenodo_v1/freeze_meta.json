@@ -1,0 +1,20 @@
+{
+ "freeze_utc": "2026-11-27T03:45Z",
+ "rule": "R1(b), delayed from 26 Nov 12:00 IST because the 26 Nov session could not run (usage limit); search keeps running for v2",
+ "tiles_done": 2796,
+ "tile_area_deg2": 3.3572,
+ "sky_deg2": 10721,
+ "gaia_quiet_targets": 40386274,
+ "stars_scored": 13893129,
+ "dossier_rows": 7667,
+ "grades": {
+  "A": 3210,
+  "B": 2568,
+  "C": 1889
+ },
+ "R2_candidates": 5778,
+ "R2_A": 3210,
+ "R2_B": 2568,
+ "results_commit": "4190e37257e40b9f96e2256d46723cf9e36e8ef4",
+ "sky_note": "2,796 partitions: 2,646 order-5, 136 order-4, 14 order-6 (corrected 27 Nov; earlier value assumed all order-5)"
+}

@@ -6,8 +6,8 @@ SHA-256 hashes in `SHA256SUMS`, are the complete prediction. Nothing here is cha
 ## What was searched
 
 ZTF DR23 light curves of Gaia DR3 stars that DR3 left without any variability result
-(`phot_variable_flag = NOT_AVAILABLE` and no `vari_*` entry, RUWE < 1.4), in 2,796 HATS order-5 sky tiles at
-|b| >= 15 deg (about 9,400 deg2). The detector, its threshold and its validation were frozen on 22 November
+(`phot_variable_flag = NOT_AVAILABLE` and no `vari_*` entry, RUWE < 1.4, 13 <= G <= 18.5), in 2,796 HATS sky partitions (orders 4-6) at
+|b| >= 15 deg (about 10,700 deg2). The detector, its threshold and its validation were frozen on 22 November
 before any search tile was opened (sealed validation with a shuffled control). A star is a candidate when it is
 grade A or B under the automatic rules, its period is recovered in at least two independent ZTF light curves and
 it carries no warning flag.
