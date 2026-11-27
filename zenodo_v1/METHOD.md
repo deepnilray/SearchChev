@@ -58,7 +58,8 @@ stated limitation.
   curves are too weak to claim.
 * `image_check.csv` and `image_sheets/`: the sky-image and light-curve verdicts for all 90 stars.
 * `dr4_prediction/`: the advance prediction for Gaia DR4, its control list and scoring script.
-* `code_snapshot.zip`: the code at the freeze commit.
+* `code_snapshot.zip`: the search, vetting and prior-art code and the freeze files at the freeze commit (the full
+  history, including the decision rules committed on 24 November before the freeze, is in the GitHub repository).
 * `SHA256SUMS`: hashes of every file.
 
 Results branch: github.com/deepnilray/SearchChev, branch `realsky-results`, commit 4190e37.

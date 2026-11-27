@@ -14,8 +14,9 @@ Go to zenodo.org, log in with your ORCID, click **New upload**, then:
    degrees), 13.9 million such stars were scored by a detector whose threshold was frozen and validated on sealed
    tiles before the search. 5,778 stars pass every vetting rule (period recovered in at least two independent ZTF
    light curves, stable season to season, no brighter neighbour). The record contains the frozen catalogue with
-   prior-art checks against VSX, 17 VizieR catalogues, SIMBAD, ALeRCE and the ZTF SCoPe classifications, the new
-   variables that pass every check including sky images, and an advance prediction of what Gaia DR4 (2 December
+   prior-art checks against VSX, 17 VizieR catalogues, SIMBAD, ALeRCE and the ZTF SCoPe classifications (86.8% are
+   already listed as variable by SCoPe), 32 new variable stars that pass every catalogue, sky-image and light-curve
+   check, and an advance prediction of what Gaia DR4 (2 December
    2026) will report for these stars, with a matched control list and the scoring script. The catalogue was frozen
    on 27 November 2026 at 03:45 UTC. METHOD.md describes the method and the numbers; SHA256SUMS lists file hashes.
 
