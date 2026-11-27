@@ -2,7 +2,11 @@ name: scope-index
 # SCoPe prior-art check of the frozen SearchChev catalogue (Healy et al. 2024; latest release, Zenodo 20057104).
 # One job per bundle; each writes idx_<bundle>.parquet to branch scope-index. Run from branch dr4-engine
 # (gh workflow run scope.yml --ref dr4-engine) only when the realsky search is not using the runners.
-on: {workflow_dispatch: {}}
+on:
+  workflow_dispatch:
+    inputs:
+      cand: {description: "CSV with a source_id column", default: "freeze/catalogue_v1_raw.csv"}
+      branch: {description: "branch to write idx files to", default: "scope-index"}
 jobs:
   bundle:
     runs-on: ubuntu-latest
@@ -21,13 +25,13 @@ jobs:
       - run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc || true
           until curl -sSL --fail -C - -o b.zip "https://zenodo.org/api/records/20057104/files/${{ matrix.bundle }}_fields.zip/content"; do sleep 10; done
-          CAND=freeze/catalogue_v1_raw.csv python -I scopecheck/idx.py b.zip idx_${{ matrix.bundle }}.parquet
+          CAND=${{ inputs.cand }} python -I scopecheck/idx.py b.zip idx_${{ matrix.bundle }}.parquet
       - env: {TOKEN: "${{ github.token }}"}
         run: |
           URL="https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
           for try in 1 2 3 4 5 6 7 8; do
-            rm -rf pub; git clone -q --depth 1 --branch scope-index "$URL" pub 2>/dev/null || { mkdir pub && cd pub && git init -q && git checkout -q -b scope-index && git remote add origin "$URL" && cd ..; }
+            rm -rf pub; git clone -q --depth 1 --branch ${{ inputs.branch }} "$URL" pub 2>/dev/null || { mkdir pub && cd pub && git init -q && git checkout -q -b ${{ inputs.branch }} && git remote add origin "$URL" && cd ..; }
             cp idx_${{ matrix.bundle }}.parquet pub/; cd pub; git add -A
             git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "SCoPe bundle ${{ matrix.bundle }}" || exit 0
-            git push -q origin HEAD:scope-index && exit 0; cd ..; sleep $(( RANDOM % 30 + 5 ))
+            git push -q origin HEAD:${{ inputs.branch }} && exit 0; cd ..; sleep $(( RANDOM % 30 + 5 ))
           done; exit 1
