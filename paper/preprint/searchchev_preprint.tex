@@ -1,14 +1,15 @@
-\documentclass[twocolumn]{aastex701}
+\documentclass[twocolumn]{searchchev_preprint}
 \usepackage{graphicx}
 \begin{document}
 
 \title{Variable stars hidden from Gaia DR3: a sealed-validation search of 13.9 million stars in ZTF,\\
 with a pre-registered prediction for Gaia DR4}
 
+\correspondingauthor{Deepnil Ray, \texttt{deepnilray\_ug2025@ashoka.edu.in}}
 \author[0000-0001-8779-0700]{Deepnil Ray}
 \affiliation{Ashoka University, Sonipat, Haryana 131029, India}
 \affiliation{The NoRCEL Institute, United Kingdom}
-\email{deepnilray_ug2025@ashoka.edu.in}
+\email{deepnilray\_ug2025@ashoka.edu.in}
 
 \begin{abstract}
 Gaia DR3 published variability results for about 10.5 million sources and none for the rest of its 1.8 billion. I
@@ -30,8 +31,8 @@ the method and a measurement of which variables Gaia's pipeline misses.
 \keywords{Variable stars (1761) --- Sky surveys (1464) --- Astronomy data analysis (1858) --- Eclipsing binary stars (444)}
 
 \section{Introduction}
-Gaia DR3 contains the largest homogeneous census of variable stars to date, but its variability processing only
-reports sources it identified as variable \citep{Eyer2023}. A star absent from the variability tables may be constant,
+Gaia \citep{Gaia2016} DR3 \citep{Gaia2023} contains the largest homogeneous census of variable stars to date, but its
+variability processing only reports sources it identified as variable \citep{Eyer2023,Rimoldini2023}. A star absent from the variability tables may be constant,
 or it may be a real variable that the pipeline missed because of Gaia's sparse, scanning-law-driven sampling, its
 amplitude, or its brightness. How many real variables are missed, and of which kinds, has not been measured.
 \citet{Everall2022} describe a selection function for Gaia's variable samples as ``hugely valuable'' and note that
@@ -107,6 +108,11 @@ a known variable within $30''$, whose light could leak into the ZTF photometry, 
 brighter than Gaia $G$ with no Gaia $G_{BP}-G_{RP}$, a sign that the ZTF source is a blend that Gaia resolves. Either
 moves a star to ``uncertain''. Finally every light curve was inspected by eye, and only those with a coherent shape
 well above the scatter in both bands are claimed.
+
+\subsection{Use of AI tools}
+The analysis code was developed, and the analysis and drafting of this manuscript were carried out, with the
+assistance of an AI system (Claude, Anthropic). The author designed and directed the work, checked every number
+against the data files and code, and takes full responsibility for the content.
 
 \section{Results}
 \subsection{The census}
@@ -255,9 +261,11 @@ results are at \url{https://github.com/deepnilray/SearchChev}.
 This work used data from the Zwicky Transient Facility, obtained through the NASA/IPAC Infrared Science Archive, and
 data from the ESA mission Gaia, processed by the Gaia Data Processing and Analysis Consortium. It made use of the
 ZTF SCoPe classifications, the ALeRCE broker, the AAVSO VSX catalogue, the SIMBAD and VizieR services of CDS, the
-Pan-STARRS1 image archive, and the Gaia mirror of the Leibniz Institute for Astrophysics Potsdam. Software development
-and analysis were assisted by an AI system (Claude, Anthropic); all results were checked by the author.
+Pan-STARRS1 image archive, and the Gaia mirror of the Leibniz Institute for Astrophysics Potsdam. The use of AI tools is described in the Method section.
 \end{acknowledgments}
+
+\section*{Conflicts of interest}
+The author declares no conflicts of interest.
 
 \begin{thebibliography}{}
 \bibitem[Bellm et al.(2019)]{Bellm2019} Bellm, E. C., et al. 2019, PASP, 131, 018002
@@ -265,10 +273,13 @@ and analysis were assisted by an AI system (Claude, Anthropic); all results were
 \bibitem[Chen et al.(2020)]{Chen2020} Chen, X., et al. 2020, ApJS, 249, 18
 \bibitem[Everall \& Boubert(2022)]{Everall2022} Everall, A., \& Boubert, D. 2022, MNRAS, 509, 6205
 \bibitem[Eyer et al.(2023)]{Eyer2023} Eyer, L., et al. 2023, A\&A, 674, A13
+\bibitem[Gaia Collaboration et al.(2016)]{Gaia2016} Gaia Collaboration, Prusti, T., et al. 2016, A\&A, 595, A1
+\bibitem[Gaia Collaboration et al.(2023)]{Gaia2023} Gaia Collaboration, Vallenari, A., et al. 2023, A\&A, 674, A1
 \bibitem[Healy et al.(2024)]{Healy2024} Healy, B. F., et al. 2024, ApJS, 272, 14
 \bibitem[Lomb(1976)]{Lomb1976} Lomb, N. R. 1976, Ap\&SS, 39, 447
 \bibitem[Masci et al.(2019)]{Masci2019} Masci, F. J., et al. 2019, PASP, 131, 018003
 \bibitem[Ofek et al.(2020)]{Ofek2020} Ofek, E. O., et al. 2020, MNRAS, 499, 5782
+\bibitem[Rimoldini et al.(2023)]{Rimoldini2023} Rimoldini, L., et al. 2023, A\&A, 674, A14
 \bibitem[S\'anchez-S\'aez et al.(2021)]{SanchezSaez2021} S\'anchez-S\'aez, P., et al. 2021, AJ, 161, 141
 \bibitem[Scargle(1982)]{Scargle1982} Scargle, J. D. 1982, ApJ, 263, 835
 \bibitem[Watson et al.(2006)]{Watson2006} Watson, C. L., Henden, A. A., \& Price, A. 2006, SASS, 25, 47
