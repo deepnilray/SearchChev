@@ -25,6 +25,16 @@ Nothing goes public (preprint, Zenodo, VSX, LinkedIn, journal) while any item it
       detector, equal efficiency checked at fixed period, amplitude, G.
 - [ ] A7 Gaia transit-count dimension (registered in Amendment 2): flagged fraction vs phot_g_n_obs / scan coverage.
 
+- [ ] A8 Arévalo fix (found 28 Nov during C). J/A+A/705/A247 lists stars classed "nonvar-star", yet any match counted as "known".
+      3,261 hits were KNOWN only via Arévalo (5,682 have any Arévalo match); in a sample, 8 of 12 were nonvar-star.
+      (a) classify all 3,261 (job: /tmp/arev_cls.py -> /home/claude/sf/arevalo_classes.csv); (b) hits with only non-variable
+      Arévalo classes -> freeze/arevalo_tovet.csv, vetted with the o46 list (A4); (c) recompute "catalogued" counts (16,360 /
+      16,737), the supported count Q_ext and catalogue/new-star numbers; (d) check whether any of the 5,053 "known" catalogue
+      stars rest only on Arévalo; (e) disclose as a deviation from the pre-registered prior-art rule. SCoPe headline C unaffected.
+- [x] C  References verified (refs_checked.md, commit 8832c5b12). Kostov2025, van Roestel Zenodo dataset, ZVAR authors added.
+- [~] D1 Section 4 rewritten on B (commit 5c890329e). Still to do in D1: section 5 (stale "1.65 billion" line; catalogue
+      and new-star counts wait on A8), intro and abstract numbers, ZVAR as prior work, eclipse limitation in Discussion.
+
 ## B. Analysis (Sat 28 Nov afternoon)
 - [x] B1 (28 Nov, original detections; regenerate from sf-rerun when it finishes) SCoPe-confirmed C = 45% at S/N 5-8, 75% at 8-12, 91% at 12-20, 96% at >=20. C (flagged fraction) vs ZTF S/N (amp/err), with score as robustness; table + figure.
 - [x] B2 (28 Nov) period x amplitude: at 0.05-0.1 mag C falls 69% -> 49% -> 38% -> 42% -> 32% from <0.5 d to 16-160 d, so the period trend is not an amplitude effect; detector recall among flagged stars by class: ECL 74%, RR 86%, RS 21%, SOLAR_LIKE 1%, no class 2%; tile bootstrap for every bin (paper/v2/b_analysis.py). C by Gaia class; period x amplitude table; tile-bootstrap intervals per bin.
