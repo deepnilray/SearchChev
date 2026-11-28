@@ -78,3 +78,21 @@ Nothing goes public (preprint, Zenodo, VSX, LinkedIn, journal) while any item it
 - [ ] F2 Repeat the selection function with DR4 flags.
 - [ ] F3 RNAAS note filled and checked (word limit, numbers).
 - [ ] F4 Paper v3 with DR4 section; R1-R4 again; choose journal (no-fee options) and prepare submission for Deepnil.
+
+## R. Review round 1 (Sonnet + Opus, 28 Nov 12:50) — triage
+Fixed now: abstract (C_SC headline, one definition, stat-only interval, ZVAR 24/8, sources listed); vetting text = vet.py
+(8" G+1 rule, season test only where >=2 seasons, 108 untested); "pre-registered" -> "registered during the search";
+unvetted order-4/6 hits disclosed; SCoPe 1.65bn line; n_obs overclaim; Table 1 row for the 635; SCoPe symmetry sentence;
+injection wording; ZVAR/Kerr/Delfini citations; young-star lists checked (membership/accretion only, no variability).
+Checked and rejected: "ERROR counted as known" (0 cases in hits_freeze).
+- [ ] R1 GATE: no SF number goes public until the sf-rerun (A1) replaces the denominator-run numbers (Method + Discussion
+      now describe the rerun design).
+- [ ] R2 DR4 amendment BEFORE 2 Dec: freeze P2 LS implementation (grid, FAP method, epoch filter), P3 trend test + sign,
+      disclose control attrition (550 of 1,156) and test it against RA/Dec/G; add risky prediction (DR4 flag rate per S/N bin
+      and for the 32). Commit dated.
+- [ ] R3 Alias check: 4586091900291068672 (0.9717 d) and 144104918810873600 (0.4813 d): compare LS power at f and |f-n|.
+- [ ] R4 Eclipse evidence for 3 EAs: in-eclipse points, eclipses/season, depth/scatter in g and r (appendix figure).
+- [ ] R5 Injection: per-group clf/free efficiencies with binomial errors; per-period matched efficiencies.
+- [ ] R6 Null test: full detector on phase-scrambled light curves of the same stars (FP rate under the full rule).
+- [ ] R7 Delfini2025 author initials; v1.2 preprint carries ZVAR + A8 disclosure (in Monday pack).
+Not adopted (caution only): stratified bootstrap by order, extra injection tiles, TESS rotation comparison, demoting EBs.
