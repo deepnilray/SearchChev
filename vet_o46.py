@@ -3,6 +3,8 @@
 vet.py's partition reader always opened Norder=5 files, so the 920 search hits (at the 27 Nov freeze) that needed
 vetting in the 101 order-4/6 partitions were never vetted. This runs the fixed vet.py (from dr4-engine) on them,
 partition by partition, with the same arguments interface as the denominator workflow.
+Since 28 Nov the input list also holds the 1,843 hits marked known only through Arévalo et al. (J/A+A/705/A247) entries
+classed non-variable (column why=arevalo_nonvar; checklist A8). Original order-4/6 list: freeze/o46_only.csv.
 Inputs fetched from dr4-engine (FETCH_HEAD in the workflow): vet.py, freeze/o46_tovet.csv.
 """
 import argparse, json, os, subprocess, sys, time
