@@ -16,7 +16,7 @@ from varwise_gaia_hunt import lc_features
 def partition_rows(tile, ra, dec, rad=2.0):
     import s3fs, pyarrow.parquet as pq
     fs = s3fs.S3FileSystem(anon=True)
-    f = pq.ParquetFile(fs.open(f"{HATS}/dataset/Norder=5/Dir={tile['dir']}/Npix={tile['id']}/part0.snappy.parquet",
+    f = pq.ParquetFile(fs.open(f"{HATS}/dataset/Norder={tile.get('order', 5)}/Dir={tile['dir']}/Npix={tile.get('npix', tile['id'])}/part0.snappy.parquet",
                                block_size=32 << 20))
     out = {i: [] for i in range(len(ra))}
     for g in range(f.metadata.num_row_groups):

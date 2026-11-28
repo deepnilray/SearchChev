@@ -1,0 +1,73 @@
+name: denominator
+# Selection-function runs for SearchChev. This copy lives on branch dr4-engine and is dispatched with
+#   gh workflow run denominator.yml --ref dr4-engine -f script=<script> -f branch=<results branch> -f state=<state file>
+# The copy on main (no inputs) is the original pre-registered denominator run and is unchanged.
+# Code and model come from branch realsky-validation, exactly as the search uses them; the script and the partition
+# sample come from dr4-engine. Results go to the named branch after every run; the run restarts itself until every
+# sampled partition is done. It does not read or write anything the search uses.
+on:
+  workflow_dispatch:
+    inputs:
+      script: {description: "script on dr4-engine", default: "denom.py"}
+      branch: {description: "results branch", default: "denom-results"}
+      prefix: {description: "per-shard file prefix (denom or sf)", default: "denom"}
+concurrency: {group: "denominator-${{ inputs.branch }}", cancel-in-progress: false}
+jobs:
+  shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions: {contents: write}
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: realsky-validation}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.13", cache: pip}
+      - run: pip install -r requirements-realsky.txt
+      - name: Fetch the script and the partition sample from dr4-engine
+        run: |
+          git fetch -q --depth 1 origin dr4-engine
+          git show FETCH_HEAD:${{ inputs.script }} > run_script.py
+          git show FETCH_HEAD:freeze/denominator_tiles.json > denominator_tiles.json
+      - name: Resume, run, publish
+        env: {TOKEN: "${{ github.token }}", P: "${{ inputs.prefix }}", B: "${{ inputs.branch }}"}
+        run: |
+          K=${{ matrix.shard }}; OUT=work/run$K; mkdir -p $OUT cache scratch
+          URL="https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git"
+          if git clone -q --depth 1 --branch "$B" "$URL" prev 2>/dev/null; then
+            [ -f prev/shard$K/${P}_state.json ] && cp prev/shard$K/${P}_state.json prev/shard$K/${P}_rows.csv $OUT/ 2>/dev/null || true
+          fi
+          timeout 320m python run_script.py --out $OUT --shard $K --nshards 20 --tiles denominator_tiles.json --hours 4.8 --workers 4 || echo "run exited non-zero"
+          for try in 1 2 3 4 5 6 7 8; do
+            rm -rf pub; git clone -q --depth 1 --branch "$B" "$URL" pub 2>/dev/null || { mkdir pub && cd pub && git init -q && git checkout -q -b "$B" && git remote add origin "$URL" && cd ..; }
+            mkdir -p pub/shard$K; cp $OUT/${P}_state.json $OUT/${P}_rows.csv pub/shard$K/ 2>/dev/null
+            cd pub; git add -A
+            git -c user.name=searchchev-bot -c user.email=bot@users.noreply.github.com commit -qm "$P shard $K" || exit 0
+            git push -q origin HEAD:"$B" && exit 0; cd ..; sleep $(( RANDOM % 30 + 5 ))
+          done; exit 1
+  next:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    permissions: {actions: write, contents: read}
+    steps:
+      - name: Restart if sampled partitions remain
+        env: {GH_TOKEN: "${{ github.token }}", P: "${{ inputs.prefix }}", B: "${{ inputs.branch }}", S: "${{ inputs.script }}"}
+        run: |
+          git clone -q --depth 1 --branch dr4-engine "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" eng
+          git clone -q --depth 1 --branch "$B" "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" res || exit 0
+          LEFT=$(P="$P" python3 - <<'PY'
+          import json, glob, os
+          want = set(map(str, json.load(open("eng/freeze/denominator_tiles.json"))))
+          done = set()
+          for f in glob.glob(f"res/shard*/{os.environ['P']}_state.json"):
+              done |= set(map(str, json.load(open(f))["done"]))
+          print(len(want - done))
+          PY
+          )
+          echo "sampled partitions remaining: $LEFT"
+          if [ "$LEFT" -gt 0 ]; then gh workflow run denominator.yml --ref dr4-engine -R "${{ github.repository }}" -f script="$S" -f branch="$B" -f prefix="$P"; fi
