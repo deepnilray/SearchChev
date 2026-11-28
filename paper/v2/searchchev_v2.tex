@@ -1,6 +1,8 @@
 \documentclass[twocolumn]{searchchev_preprint}
 \usepackage{graphicx}
 \input{numbers.tex}
+\input{numbers_b.tex}
+\input{numbers_inj.tex}
 \begin{document}
 
 \title{How many periodic variables did Gaia DR3 miss? A sealed-validation search of 13.9 million stars in ZTF,
@@ -148,60 +150,76 @@ assistance of an AI system (Claude, Anthropic). The author designed and directed
 against the data files and code, and takes full responsibility for the content. Every number in the text is generated
 by a script from the archived data (Data availability).
 
-\section{What fraction of periodic variables did Gaia DR3 flag?}\label{sec:sf}
+\section{What fraction of periodic variables did Gaia DR3 publish?}\label{sec:sf}
+% Numbers: denominator run (280 partitions). Regenerated from the sf-rerun (CHECKLIST A1-A3) before release.
 \subsection{Design}
-In a random 10\% of the searched partitions (\ndtiles, drawn with a fixed seed and listed in the archive), I ran the
-frozen detector, unchanged, on the Gaia DR3 stars that Gaia \emph{did} flag (an entry in \texttt{vari\_summary} or
-\texttt{phot\_variable\_flag} = VARIABLE), with the same magnitude range, RUWE cut, cross-match, isolation criterion,
-pre-filter, score threshold, channels and season split as the search. Of \ndflag\ flagged stars, \ndmatch\ have a ZTF
-light curve and \ndfeat\ pass the pre-filter; the detector finds \ndF\ of them (\ndFfrac\%). In the same partitions the
-search found \ndQ\ Gaia-quiet stars. Because the two groups pass through an identical ZTF selection, the fraction of
-ZTF-detected periodic variables that DR3 flagged is
+Gaia DR3 publishes a variability result only for the sources its pipeline identified as variable, and \citet{Eyer2023}
+estimate that far more sources were potentially variable than the 10.5 million that were published. The quantity
+measured here is therefore the fraction of ZTF-detectable periodic variables for which DR3 \emph{published} a
+variability result; a star without one may still have been seen to vary by Gaia.
+
+In \nbNtiles\ partitions drawn at random with a fixed seed (listed in the archive), I ran the frozen detector,
+unchanged, on two groups of Gaia DR3 stars: those Gaia flagged (an entry in \texttt{vari\_summary} or
+\texttt{phot\_variable\_flag} = VARIABLE) and those it did not. Both groups pass through one pipeline with the same
+magnitude range and RUWE cut, the same $1\farcs5$ cross-match to ZTF, the same isolation test against every Gaia DR3
+source of any magnitude within $3''$, the same rejection of ZTF objects matched to more than one target, the same
+pre-filter, score threshold, channels, alias cuts and independent-halves test. The fraction
 \begin{equation}
 C = \frac{N_{\rm flagged}}{N_{\rm flagged}+N_{\rm quiet}},
 \end{equation}
-where both counts are detections by the frozen detector. $C$ measures DR3 against variables this ZTF detector can
-find, so it says nothing about variables too faint, too low in amplitude or too long in period for ZTF.
+where both counts are detections by the frozen detector, compares DR3 with the variables this ZTF detector finds. It
+carries no information about variables too faint, too low in amplitude or too long in period for ZTF.
+In total the detector finds \nbNF\ variables among flagged stars and \nbNQ\ among quiet ones.
 
 \subsection{What counts as a real detection}
-A detection among Gaia-quiet stars may be spurious, which would make $C$ too low. I therefore use three counts of
-$N_{\rm quiet}$. The first counts every detection (\ndQ). The second counts only detections with independent support,
-either a published catalogue entry within $5''$ (excluding the \ndQgnb\ whose only match is a neighbouring Gaia variable)
-or a pass through the vetting of \S\ref{sec:vet}: \ndQconf\ stars (\ndQext\ catalogued and \ndQvet\ vetted). Counting
-every vetting failure as spurious makes this a conservative choice. The third is symmetric: SCoPe classifies ZTF
-light curves keyed by Gaia source identifier, so a SCoPe match is the same star. Of the detections inside SCoPe's
-coverage, it lists \nscFpct\% of the Gaia-flagged ones (\nscF\ of \nscFin) and \nscQpct\% of the Gaia-quiet ones
-(\nscQ\ of \nscQin) as variable at probability $\ge0.8$. Counting only SCoPe-confirmed variables on both sides removes
-false detections from both groups in the same way.
+A spurious detection among quiet stars would bias $C$ low, so $N_{\rm quiet}$ is counted three ways. The first counts
+every detection. The second counts a quiet detection only if it has independent support, either a published
+catalogue entry within $5''$ or a pass through the vetting of \S\ref{sec:vet}, and so treats every vetting failure
+as spurious. The third is symmetric and is the headline: SCoPe \citep{Healy2024} classifies ZTF light curves keyed by
+Gaia source identifier, so counting only SCoPe-confirmed variables (probability $\ge0.8$) on both sides removes false
+detections from the two groups in the same way. Inside SCoPe's coverage it confirms \nbpurQ\% of the quiet detections
+(\nbNQsc\ of \nbNQin), rising from \nbpurQlow\% at ZTF S/N 5--8 to \nbpurQhigh\% at S/N $\ge20$, and \nbpurF\% of the
+flagged ones.
 
 \subsection{Result}
-DR3 flagged \nCraw\% of the ZTF-detected periodic variables counting every detection and \nCconf\% counting supported
-detections only (95\% ranges from a bootstrap over partitions: \nCrawlo--\nCrawhi\% and \nCconflo--\nCconfhi\%). With
-SCoPe-confirmed variables on both sides the fraction is \nCsc\% (\nCsclo--\nCschi\%). Within this footprint and
-magnitude range, therefore, roughly one ZTF-detectable periodic variable in five was left without a DR3 variability
-result.
+Counting SCoPe-confirmed variables on both sides, DR3 published a variability result for \nbCsc\% of the ZTF-detected
+periodic variables (95\% interval \nbCsclo--\nbCschi\%, from 2{,}000 bootstrap resamples over partitions). Counting
+every detection gives \nbCall\% (\nbCalllo--\nbCallhi\%) and counting supported detections gives \nbCsup\%
+(\nbCsuplo--\nbCsuphi\%). Nearly one ZTF-detectable periodic variable in four in this footprint and magnitude range therefore
+has no published DR3 variability result.
 
-The missed fraction is far from uniform (Figure~\ref{fig:sf}, Table~\ref{tab:sf}). DR3 flagged about 90\% of
-variables with periods below 0.5 d (where Gaia classifies \nFshortECL\ of the \nFshortN\ flagged detections as eclipsing
-binaries and \nFshortRR\ as RR Lyrae stars), but only \nClongPlo--\nClongPhi\% of
-those with periods between 1.6 and 160 d. It flagged \nChighamp\% of variables with amplitudes above 0.4 mag and
-\nClowamp\% of those with amplitudes of 0.05--0.1 mag. Among the flagged detections at 1.6--160 d,
-Gaia classifies \nFlongRS\ of \nFlongN\ as RS CVn and \nFlongSOL\ as solar-like variables, both classes of spotted stars.
-The dependence on $G$ is weak: the flagged fraction is \nGdropConf--\nGdropRaw\ percentage points lower at $G=16$--18 than
-at $G=13$--15. DR3 therefore missed mainly low-amplitude variability at multi-day periods, the regime of starspot
-modulation on cool dwarfs, which is what most catalogue stars are (\S\ref{sec:pop}).
+The missing fraction depends strongly on how clearly ZTF sees the signal and on period (Table~\ref{tab:sf},
+Figure~\ref{fig:sf}). $C$ rises from \nbCsnlow\% at ZTF S/N 5--8 to \nbCsnhigh\% at S/N $\ge20$. It is about 90\% for
+periods below 0.5 d and about half for periods between 1.6 and 160 d. The period trend survives at fixed amplitude: for
+amplitudes of 0.05--0.1 mag, $C$ in the five period bins of Table~\ref{tab:pa} is \nbPAlowseq\%. The dependence on $G$
+is weak. Gaia's own classes tell the same story from the other side: the detector recovers \nbrecECL\% of the stars
+DR3 classifies as eclipsing binaries and \nbrecRR\% of its RR Lyrae stars, but only \nbrecRS\% of its RS CVn stars and
+\nbrecSOLARLIKE\% of its solar-like variables (Table~\ref{tab:class}); these rates are among flagged stars that pass the pre-filter. The variables DR3 left unpublished are mainly low-amplitude stars at multi-day periods, the regime of
+starspot modulation on cool dwarfs, which is what most catalogue stars are (\S\ref{sec:pop}).
+
+\subsection{Injection test}
+If the detector found variability more easily in quiet stars than in flagged ones, $C$ would be biased low. I injected
+\niN\ sinusoidal and eclipse signals into the light curves of flagged and quiet stars that the detector had not already
+flagged, and ran the frozen pipeline on them. After reweighting the quiet stars to the $G$ distribution of the flagged
+ones, sinusoids of semi-amplitude $\ge0.02$ mag are recovered at \nihiF\% in flagged and \nihiQ\% in quiet stars. At
+0.01--0.02 mag the rates are \nilowF\% and \nilowQ\% (\nilowNF\ and \nilowNQ\ injections), so near threshold any
+bias runs towards finding flagged stars more easily, which would push $C$ up. The classifier-gated and classifier-free
+detectors recover the same fraction of sinusoids (\niclf\% and \nifree\%). Narrow eclipses are recovered in only
+\niecl\% of injections, so $C$ applies to variables with sinusoid-like light curves and says little about detached
+eclipsing binaries.
 
 \begin{figure*}
 \centering
 \includegraphics[width=0.98\textwidth]{fig_sf.pdf}
-\caption{Fraction of ZTF-detected periodic variables that Gaia DR3 flagged, in the bins registered before the
-measurement, against ZTF period, amplitude and $G$, in \ndtiles\ randomly chosen partitions. Solid line: every
-detection counted; dashed line: Gaia-quiet detections counted only if catalogued within $5''$ or passing vetting; the
-shaded band spans the 95\% Wilson intervals of the two. Points: SCoPe-confirmed variables only, on both sides. Bins
-with fewer than 30 stars are omitted.\label{fig:sf}}
+\caption{Fraction $C$ of ZTF-detected periodic variables for which Gaia DR3 published a variability result, against
+ZTF S/N, period, amplitude and $G$, in \nbNtiles\ random partitions. Points: SCoPe-confirmed variables on both sides
+(headline), with 95\% bootstrap intervals over partitions. Lines: every detection (solid) and supported detections
+(dashed). Bins with fewer than 30 stars are omitted.\label{fig:sf}}
 \end{figure*}
 
-\input{sf_table.tex}
+\input{table_sn.tex}
+\input{table_pa.tex}
+\input{table_class.tex}
 
 \section{The catalogue}
 \subsection{From detections to catalogue}

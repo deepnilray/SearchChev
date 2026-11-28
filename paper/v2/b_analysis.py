@@ -76,6 +76,10 @@ sn = B[B['var'] == 'amp_over_err']
 M['Csnlow'] = p(sn.iloc[0].C_sc); M['Csnhigh'] = p(sn.iloc[-1].C_sc); M['Csnlowall'] = p(sn.iloc[0].C_all); M['Csnhighall'] = p(sn.iloc[-1].C_all)
 for k in ('ECL', 'RR', 'RS', 'SOLAR_LIKE', 'none', 'AGN'):
     if k in cls.index: M[f'rec{k.replace("_", "").replace("none", "noclass")}'] = p(cls.loc[k, 'recall']); M[f'n{k.replace("_", "").replace("none", "noclass")}'] = f"{int(cls.loc[k, 'n']):,}"
+M['NF'] = f"{len(F):,}"; M['NQ'] = f"{len(Q):,}"; M['NFsc'] = f"{int(F.sc.sum()):,}"; M['NQsc'] = f"{int(Q.sc.sum()):,}"
+M['NQin'] = f"{int(Q.sin.sum()):,}"
+_pa = PA[(PA.alo == 0.05)].sort_values('plo'); M['PAlowseq'] = ', '.join(p(x) if x == x else '--' for x in _pa.C_sc)
+M['Ntiles'] = f"{D.tile.nunique()}"
 with open('numbers_b.tex', 'w') as fh:
     for k, v in sorted(M.items()):
         fh.write(f"\\newcommand{{\\nb{k}}}{{{v}}}\n")
