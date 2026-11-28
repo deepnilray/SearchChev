@@ -21,7 +21,7 @@ Nothing goes public (preprint, Zenodo, VSX, LinkedIn, journal) while any item it
       from the flagged group; prior-art ERROR values treated as unknown, not as matches.
 - [~] A4 (vet.py fixed on dr4-engine; vet_o46.py queued after A1; the same fix on realsky-validation needs Deepnil's approval because the search is running) Fix vet.py partition_rows for order-4/6 partitions; vet the 920 unvetted hits; v1.1 catalogue with full area.
 - [x] A5 SCoPe lookup complete (24/24 bundles) for flagged and quiet detections. 11,753 of 12,110 detected stars in SCoPe coverage; SCoPe-confirmed C = 77% (75-78%). Branch scope-sf; merged by paper/v2/scope_sf.py.
-- [ ] A6 Injection-recovery: sinusoids and eclipses injected into real quiet and flagged ZTF light curves, same
+- [x] A6 (28 Nov; 4,752 injections in partitions 889, 5455, 7893; paper/v2/data/injection_sf.csv) Brightness-matched efficiency equal within errors for semi-amplitude >= 0.02 mag; at 0.01-0.02 mag flagged 21% vs quiet 13% (biases C upward only); classifier and classifier-free give the same efficiency; narrow detached eclipses (4% width) recovered ~1%: state as a limitation. Injection-recovery: sinusoids and eclipses injected into real quiet and flagged ZTF light curves, same
       detector, equal efficiency checked at fixed period, amplitude, G.
 - [ ] A7 Gaia transit-count dimension (registered in Amendment 2): flagged fraction vs phot_g_n_obs / scan coverage.
 
