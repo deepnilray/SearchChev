@@ -1,59 +1,92 @@
-# SearchChev
-
-Created with SearchChev. Author: Deepnil Ray.
-
-A terminal pipeline that searches for optical variable stars that sit in the VarWISE
-infrared-variable catalogue (Paz et al. 2026, ApJS 284, 41) but in no optical variable catalogue.
-It downloads its own real data (IRSA VarWISE, Gaia DR3, ZTF), trains and validates a model on it,
-then searches the sky box by box.
-
-## Run
-
 ```
-pip install -r requirements.txt
-python varwise_gaia_hunt.py selftest            # offline logic test
-python varwise_gaia_hunt.py brutetest           # adversarial test, SIMULATED data only
-python varwise_gaia_hunt.py smoke --out smoke   # every archive stage, PASS/FAIL per stage
-python varwise_gaia_hunt.py auto --out run1     # preflight, download, train, validate, search (resumable)
+   _____                      __      ________
+  / ___/___  ____ ___________/ /_    / ____/ /_  ___ _   __
+  \__ \/ _ \/ __ `/ ___/ ___/ __ \  / /   / __ \/ _ \ | / /
+ ___/ /  __/ /_/ / /  / /__/ / / / / /___/ / / /  __/ |/ /
+/____/\___/\__,_/_/   \___/_/ /_/  \____/_/ /_/\___/|___/
+
+        hunting the variable stars that Gaia DR3 called quiet
 ```
 
-`auto` stops without training if any preflight stage fails, and uses a model only if its
-held-out AUC is at least 0.85 and a shuffled-label control is near 0.5.
+**Author:** Deepnil Ray ([ORCID 0000-0001-8779-0700](https://orcid.org/0000-0001-8779-0700)) · The NoRCEL Institute
+**Catalogue v1:** [doi:10.5281/zenodo.24579691](https://doi.org/10.5281/zenodo.24579691) (frozen 27 Nov 2026, 03:45 UTC)
+
+---
 
 ## What it does
 
-1. VarWISE sources in a sky box (the "pure" table is preferred).
-2. Gaia DR3 counterpart within 3 arcsec; drops sources that already have a Gaia variability solution.
-3. ZTF light curves, Lomb-Scargle period search, plus an eclipse (box-fit) channel for narrow dips.
-4. 80/20 model split by sky cell (Gaia-known variables vs unflagged sources; proxy negatives are
-   not confirmed constant stars).
-5. Cuts: signal significance, non-alias period, independent agreement of both temporal halves.
-6. Prior-art cut: VSX, ASAS-SN, ZTF periodic (Chen 2020), Gaia DR3 classifier, SIMBAD.
-7. Comparison of the optical period with VarWISE's own infrared period (`varwise_period_agrees`).
-
-## Status (be honest about it)
-
-- MEASURED on simulated data only: the offline tests pass; eclipse channel gave 0 false passes in
-  600 noise-only curves and recovered 62.5% of simulated narrow eclipses.
-- NOT YET MEASURED on the real sky: every network stage, real-sky precision, completeness.
-- Output files are CANDIDATES. Before calling any object new: inspect the folded light curve,
-  check imaging for blends, test double the period, run MPChecker, search VSX by position.
-- Known limits: single events are not found by the periodic channels; the anomaly queue
-  (`--include-anomalies`) flags every kind of variability and is a lead generator only.
-
-## EulerSearch #1: `eulerattack.py` (sealed, gated attack)
-
-VarWISE Pure targets x ZTF DR24 light curves, trained on VSX confirmed variables (positives) and
-Gaia-quiet stars (negatives, judged by a different instrument). Shape features only; magnitude-matched
-classes; sky tiles fixed in a manifest before any download; a guard refuses any access outside the
-current phase; validation tiles open only after the fit; the gate requires AUC lower bound >= 0.85,
-shuffled control near 0.5, false-positive upper bound <= 5%, >= 150 per class. Failure stops; there is
-no untrained mode.
+Gaia DR3 published variability results for about 10.5 million of its 1.8 billion sources. Every other star is
+either constant or a variable that Gaia's pipeline did not report. SearchChev reads Zwicky Transient Facility (ZTF)
+DR23 light curves for Gaia DR3 stars with **no** variability result and finds the periodic ones, with a detector whose
+threshold was fixed and whose performance was measured on sky tiles sealed before the search (AUC 0.954).
 
 ```
-python eulerattack.py brutetest            # offline adversarial test: 10/10 checks passed (synthetic sky)
-python eulerattack.py census --out c1      # measures data adequacy on real tiles
-python eulerattack.py train  --out a1
-python eulerattack.py search --out a1 --hours 5 --target 20
+                 .        *          .             *           .
+    *       .        GAIA DR3: "nothing to see here"       .        *
+        .        *          .        *        .       *          .
+   ------------------------------------------------------------------
+                            ZTF, phase-folded:
+
+      mag  |  ** *  *** ** *         ** *  *** ** *
+           |         *    *  *               *    *  *
+           |              *    *  *                *    *
+           |                  * ** *                  * ** *
+           +--------------------------------------------------> phase
+                  0              0.5               1
 ```
-Real-sky performance is not yet measured.
+
+## The funnel (catalogue v1)
+
+```
+  40.4 M   Gaia DR3 stars with no variability result
+           13 <= G <= 18.5, |b| >= 15 deg, dec >= -25 deg, 10,700 deg^2
+     |
+     v
+  13.9 M   with an isolated ZTF r-band light curve, scored by the frozen detector
+     |
+     v
+  31,089   confirmed periodic signals
+     |
+     +--->  most already in a published variable-star catalogue (within 5")
+     |
+     v
+   5,778   vetted catalogue stars, grade A or B
+           (period in two separate light curves, across seasons, alias-free)
+     |
+     v
+      32   NEW VARIABLE STARS
+           listed as variable in none of VSX, VizieR, SIMBAD, ALeRCE, SCoPe, SNAD or ZVAR;
+           image, contamination and light-curve checks passed
+```
+
+The 32 include three detached eclipsing binaries, one with a 25.4-day orbit. ZVAR's automated periodograms recover
+24 of their periods; the other 8 were found by SearchChev alone.
+
+## Two more results
+
+* **How much of the variable sky Gaia DR3 published.** The same frozen detector is run on Gaia-flagged and
+  Gaia-quiet stars in the same random sky partitions, so both groups share every ZTF selection effect. The ratio
+  gives the fraction of ZTF-detectable periodic variables for which DR3 published a result, as a function of
+  signal strength, period, amplitude and magnitude. (Paper in preparation.)
+* **A prediction for Gaia DR4 (2 December 2026).** What DR4 will report for the catalogue stars and for matched
+  control stars was deposited publicly before the release, and will be scored on release day.
+
+## Branches
+
+```
+  main                 this page + the workflow definitions
+  realsky-validation   the search code (realsky.py, vet.py, prior_art.py)
+  realsky-results      search output, partition by partition
+  dr4-engine           catalogue freeze, paper, selection function, DR4 prediction and scoring
+```
+
+## Cite
+
+> Ray, D. 2026, SearchChev catalogue v1: periodic variable stars among Gaia DR3 stars with no variability result,
+> Zenodo, doi:10.5281/zenodo.24579691
+
+```
+            *        .        *        .        *
+       .        the sky is not as quiet as it looks        .
+            *        .        *        .        *
+```
