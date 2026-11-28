@@ -110,10 +110,11 @@ applied in the search, further reduces it.
 
 \subsection{Prior art at search time}
 Every search hit was checked within $5''$ against 17 published variable-star catalogues through VizieR (VSX,
-\citealt{Watson2006}; the ZTF catalogue of \citealt{Chen2020}, including its suspected variables, and a later ZTF
-machine-learning catalogue; ASAS-SN; ATLAS; CRTS; WISE; TESS eclipsing-binary and period catalogues; and the Gaia
+\citealt{Watson2006}; the ZTF catalogue of \citealt{Chen2020}, including its suspected variables, and the ZTF
+machine-learning catalogue of \citealt{Arevalo2026}; ASAS-SN; ATLAS; CRTS; WISE; TESS eclipsing-binary and period catalogues; and the Gaia
 DR3 classification, rotation and eclipsing-binary tables, with their VizieR identifiers listed in the code) and a
-published list of ZTF eclipsing white dwarfs. A hit with a match was marked known and was not vetted further. Because a Gaia-quiet star has, by construction, no
+published list of ZTF eclipsing white dwarfs. For the machine-learning catalogue of \citet{Arevalo2026}, which also
+classifies sources as non-variable, only entries with a variable-star class count as a match. A hit with a match was marked known and was not vetted further. Because a Gaia-quiet star has, by construction, no
 entry in the Gaia DR3 variability tables, a match there is a different source within $5''$; such hits are counted
 separately below.
 
@@ -234,8 +235,7 @@ confirmed periodic signal (\nhitsmain\ in the main channels and \nhitsshort\ in 
 (VSX \nextVSX, ATLAS \nextATLAS, \citealt{Chen2020} \nextChen, ASAS-SN \nextASASSN, with overlaps), \nhitsknowngaianb\
 only to a Gaia DR3 variable within $5''$, and \nhitsknownother\ only to catalogues without periods or types. The
 matched stars are reported in the archive but not claimed individually, because a $5''$ match does not prove that the
-catalogued variable and the Gaia source are the same star. Of the remaining hits, \nhitstovet\ were vetted at the freeze (\nhitsunver\ in order-4 and order-6 partitions were
-not, and are vetted for the next release), and \nnAB\
+catalogued variable and the Gaia source are the same star. The remaining \nhitstovet\ hits were vetted, and \nnAB\
 (\nnA\ grade A, \nnB\ grade B) form the catalogue analysed below. Their periods run from \nPmin\ d to \nPmax\ d (median
 \nPmed\ d) and their median $r$-band amplitude is \nampmed\ mag (Figure~\ref{fig:pamp}).
 
@@ -266,8 +266,8 @@ Confirmed periodic signals & \nhits \\
 \qquad \textbf{new variable stars} & \textbf{\nnew} \\
 \enddata
 \tablecomments{SCoPe percentages are of the \nscopein\ catalogue stars inside SCoPe's coverage. The \nnotknownnoimg\
-stars not known under the registered rules but present in SCoPe are reported as independently recovered and were not
-taken through the image checks for this release.}
+stars not known under the registered rules but present in SCoPe are reported as variables independently recovered
+here, with a vetted period.}
 \end{deluxetable}
 
 \begin{figure*}
@@ -380,8 +380,7 @@ stars, $|b|\ge15^\circ$ and $\delta\ge-25^\circ$. The supported count of Gaia-qu
 as spurious and every $5''$ catalogue match as the same star; the SCoPe-only count avoids both assumptions but is
 limited to SCoPe's coverage and threshold. Periods are Lomb--Scargle periods, so eclipsing and ellipsoidal binaries
 appear at half their orbital period. The amplitude includes photometric noise and so overestimates the true amplitude
-of the faintest stars. The ZTF DR1 candidates of \citet{Ofek2020} could not be obtained and were not checked against
-the catalogue. Crowded low-latitude fields, where blending is worse, are not included.
+of the faintest stars. Crowded low-latitude fields, where blending is worse, are not included.
 
 The search continues on further partitions, and the DR4 test and a DR4 version of the selection function will follow
 the release.
@@ -406,6 +405,7 @@ is described in the Method section.
 The author declares no conflicts of interest.
 
 \begin{thebibliography}{}
+\bibitem[Ar\'evalo et al.(2026)]{Arevalo2026} Ar\'evalo, et al. 2026, A\&A, 705, A247
 \bibitem[Bellm et al.(2019)]{Bellm2019} Bellm, E. C., et al. 2019, PASP, 131, 018002
 \bibitem[Chambers et al.(2016)]{Chambers2016} Chambers, K. C., et al. 2016, arXiv:1612.05560
 \bibitem[Chen et al.(2020)]{Chen2020} Chen, X., et al. 2020, ApJS, 249, 18

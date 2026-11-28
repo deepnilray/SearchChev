@@ -96,3 +96,8 @@ Checked and rejected: "ERROR counted as known" (0 cases in hits_freeze).
 - [ ] R6 Null test: full detector on phase-scrambled light curves of the same stars (FP rate under the full rule).
 - [ ] R7 Delfini2025 author initials; v1.2 preprint carries ZVAR + A8 disclosure (in Monday pack).
 Not adopted (caution only): stratified bootstrap by order, extra injection tiles, TESS rotation comparison, demoting EBs.
+- [x] A8(a,b) Arévalo classes for all 3,261 done (freeze/arevalo_classes.csv): 1,418 variable class (stay known), 1,843
+      non-variable/galaxy/AGN only -> merged into freeze/o46_tovet.csv (2,763 hits, 671 tiles; commit a223df67b).
+- [ ] R8 GATE (wording rule from Deepnil, 28 Nov 12:53): the paper states no "not checked / not done" items. So every count
+      that depends on vetting (\nhitstovet, \nnAB, catalogue, new stars) is regenerated after the vet-o46 run, and nothing is
+      released until A1 (rerun) and A4/A8 (vetting) are complete. Ofek 2020: catalogues checked are listed explicitly.
