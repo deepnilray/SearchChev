@@ -26,11 +26,11 @@ Nothing goes public (preprint, Zenodo, VSX, LinkedIn, journal) while any item it
 - [ ] A7 Gaia transit-count dimension (registered in Amendment 2): flagged fraction vs phot_g_n_obs / scan coverage.
 
 ## B. Analysis (Sat 28 Nov afternoon)
-- [ ] B1 C (flagged fraction) vs ZTF S/N (amp/err), with score as robustness; table + figure.
-- [ ] B2 C by Gaia class; period x amplitude table; tile-bootstrap intervals per bin.
-- [ ] B3 C with SCoPe-confirmed variables on both sides (headline), plus all-detection and supported counts.
-- [ ] B4 Purity of the 5,778 from SCoPe and from the classifier-free rerun; quiet-side false-positive estimate.
-- [ ] B5 New-variable status table for the 32: catalogues, all-VizieR (done 28 Nov), VSX live, ZVAR periodogram
+- [x] B1 (28 Nov, original detections; regenerate from sf-rerun when it finishes) SCoPe-confirmed C = 45% at S/N 5-8, 75% at 8-12, 91% at 12-20, 96% at >=20. C (flagged fraction) vs ZTF S/N (amp/err), with score as robustness; table + figure.
+- [x] B2 (28 Nov) period x amplitude: at 0.05-0.1 mag C falls 69% -> 49% -> 38% -> 42% -> 32% from <0.5 d to 16-160 d, so the period trend is not an amplitude effect; detector recall among flagged stars by class: ECL 74%, RR 86%, RS 21%, SOLAR_LIKE 1%, no class 2%; tile bootstrap for every bin (paper/v2/b_analysis.py). C by Gaia class; period x amplitude table; tile-bootstrap intervals per bin.
+- [x] B3 (28 Nov) headline C_SC = 77% (75-78%), all 75% (74-77%), supported 82% (80-83%); AGN/galaxy classes removed. C with SCoPe-confirmed variables on both sides (headline), plus all-detection and supported counts.
+- [x] B4 (28 Nov) SCoPe confirms 94% of Gaia-quiet detections (92% at S/N 5-8, 100% at S/N >= 20) and 100% of flagged ones; catalogue 86.8% (classifier-free purity follows from sf-rerun). Purity of the 5,778 from SCoPe and from the classifier-free rerun; quiet-side false-positive estimate.
+- [x] B5 (28 Nov) paper/v2/data/new32_status.csv: none in 17 catalogues, SIMBAD-variable, ALeRCE, VSX live, SNAD, all-VizieR variable catalogues; SCoPe: 31 absent, 1 present below threshold (25.4-d EB); ZVAR recovers 24, not 8; one in a flag-only YSO list; Ofek 2020 unchecked. New-variable status table for the 32: catalogues, all-VizieR (done 28 Nov), VSX live, ZVAR periodogram
       recovery (24/32 recovered, 8 not; freeze/zvar_check_28nov.csv), Ofek 2020 stated as unchecked.
 
 ## C. Literature (Sat 28 Nov)
