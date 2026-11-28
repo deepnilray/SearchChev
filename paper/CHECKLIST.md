@@ -14,13 +14,13 @@ Nothing goes public (preprint, Zenodo, VSX, LinkedIn, journal) while any item it
 - R5 State limits openly; never upgrade a claim beyond what the checks support.
 
 ## A. Data and reruns (Sat 28 Nov morning)
-- [ ] A1 Selection-function rerun on the 280 partitions with isolation tested against the full Gaia DR3 catalogue
+- [~] A1 (running on GitHub, run 46105436960, branch sf-rerun, max 10 jobs; one partition tested locally and matches the original run exactly) Selection-function rerun on the 280 partitions with isolation tested against the full Gaia DR3 catalogue
       (not within each group), and de-duplication of ZTF objects shared between flagged and quiet stars.
 - [ ] A2 Same rerun with a classifier-free detector (periodic/eclipse gates + halves test only) on both groups.
 - [ ] A3 Eclipse-channel alias cut (0.5, 1, 2 d, lunar, year) applied to both groups; AGN/QSO/galaxy classes removed
       from the flagged group; prior-art ERROR values treated as unknown, not as matches.
-- [ ] A4 Fix vet.py partition_rows for order-4/6 partitions; vet the 920 unvetted hits; v1.1 catalogue with full area.
-- [ ] A5 SCoPe lookup complete (24/24 bundles) for flagged and quiet detections.
+- [~] A4 (vet.py fixed on dr4-engine; vet_o46.py queued after A1; the same fix on realsky-validation needs Deepnil's approval because the search is running) Fix vet.py partition_rows for order-4/6 partitions; vet the 920 unvetted hits; v1.1 catalogue with full area.
+- [x] A5 SCoPe lookup complete (24/24 bundles) for flagged and quiet detections. 11,753 of 12,110 detected stars in SCoPe coverage; SCoPe-confirmed C = 77% (75-78%). Branch scope-sf; merged by paper/v2/scope_sf.py.
 - [ ] A6 Injection-recovery: sinusoids and eclipses injected into real quiet and flagged ZTF light curves, same
       detector, equal efficiency checked at fixed period, amplitude, G.
 - [ ] A7 Gaia transit-count dimension (registered in Amendment 2): flagged fraction vs phot_g_n_obs / scan coverage.
