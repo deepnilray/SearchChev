@@ -90,7 +90,10 @@ Checked and rejected: "ERROR counted as known" (0 cases in hits_freeze).
 - [ ] R2 DR4 amendment BEFORE 2 Dec: freeze P2 LS implementation (grid, FAP method, epoch filter), P3 trend test + sign,
       disclose control attrition (550 of 1,156) and test it against RA/Dec/G; add risky prediction (DR4 flag rate per S/N bin
       and for the 32). Commit dated.
-- [ ] R3 Alias check: 4586091900291068672 (0.9717 d) and 144104918810873600 (0.4813 d): compare LS power at f and |f-n|.
+- [x] R3 Alias check (done 28 Nov 16:30 IST, IRSA light curves): 4586091900291068672 P=0.9716 d is the highest LS peak in
+      g and r, daily aliases lower (r: 0.316 vs 0.25/0.18); 144104918810873600 P=0.2406 d (0.4813 d listed = 2P) highest in all
+      3 light curves (FAP 1e-31 to 1e-33), aliases |f-n| lower. Both genuine.
+      (orig:): 4586091900291068672 (0.9717 d) and 144104918810873600 (0.4813 d): compare LS power at f and |f-n|.
 - [ ] R4 Eclipse evidence for 3 EAs: in-eclipse points, eclipses/season, depth/scatter in g and r (appendix figure).
 - [ ] R5 Injection: per-group clf/free efficiencies with binomial errors; per-period matched efficiencies.
 - [ ] R6 Null test: full detector on phase-scrambled light curves of the same stars (FP rate under the full rule).
