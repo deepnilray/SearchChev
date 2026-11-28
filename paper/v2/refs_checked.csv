@@ -1,0 +1,46 @@
+key,match,doi,year,journal,volume,page,first_author,title,expected
+Gaia2016,False,10.5270/esa-ogmeula,2016.0,Gaia DR1,,,,Gaia DR1,2016 595 A1
+Gaia2023,False,10.1017/s1743921317008316,2017.0,Proceedings of the International Astronomical Union,13,139-146,Vallenari,Gaia first data release and beyond,2023 674 A1
+Eyer2023,False,10.1051/0004-6361/201833357,2018.0,Astronomy &amp; Astrophysics,620,A197,Roelens,<i>Gaia</i> Data Release 2,2023 674 A13
+Rimoldini2023,True,10.1051/0004-6361/202245591,2023.0,Astronomy &amp; Astrophysics,674,A14,Rimoldini,"<i>Gaia</i>
+                    Data Release 3",2023 674 A14
+Lebzelter2023,True,10.1051/0004-6361/202244241,2023.0,Astronomy &amp; Astrophysics,674,A15,Lebzelter,"<i>Gaia</i>
+                    Data Release 3",2023 674 A15
+Mowlavi2023,True,10.1051/0004-6361/202245330,2023.0,Astronomy &amp; Astrophysics,674,A16,Mowlavi,"<i>Gaia</i>
+                    Data Release 3",2023 674 A16
+Clementini2023,True,10.1051/0004-6361/202243964,2023.0,Astronomy &amp; Astrophysics,674,A18,Clementini,<i>Gaia</i>Data Release 3,2023 674 A18
+Distefano2023,True,10.1051/0004-6361/202244178,2023.0,Astronomy &amp; Astrophysics,674,A20,Distefano,<i>Gaia</i>Data Release 3,2023 674 A20
+Marton2023,True,10.1051/0004-6361/202244101,2023.0,Astronomy &amp; Astrophysics,674,A21,Marton,<i>Gaia</i>Data Release 3,2023 674 A21
+Gavras2023,True,10.1051/0004-6361/202244367,2023.0,Astronomy &amp; Astrophysics,674,A22,Gavras,<i>Gaia</i>Data Release 3,2023 674 A22
+Holl2018,False,10.1051/0004-6361/201833357,2018.0,Astronomy &amp; Astrophysics,620,A197,Roelens,<i>Gaia</i> Data Release 2,2018 618 A30
+Everall2022,False,10.1093/mnras/stab3262,2021.0,Monthly Notices of the Royal Astronomical Society,509,6205-6224,Everall,"Completeness of the
+                    <i>Gaia</i>
+                    verse – V. Astrometry and radial veloc",2022 509 6205
+Bellm2019,False,10.1088/1538-3873/aae904,2018.0,Publications of the Astronomical Society of the Pacific,131,018001,Patterson,The Zwicky Transient Facility Alert Distribution System,2019 131 018002
+Masci2019,False,10.1036/1097-8542.yb150709,,AccessScience,,,,Zwicky Transient Facility,2019 131 018003
+Chen2020,True,10.3847/1538-4365/ab9cae,2020.0,The Astrophysical Journal Supplement Series,249,18,Chen,The Zwicky Transient Facility Catalog of Periodic Variable Stars,2020 249 18
+Healy2024,True,10.3847/1538-4365/ad33c6,2024.0,The Astrophysical Journal Supplement Series,272,14,Healy,"The ZTF Source Classification Project. III. A Catalog of Variable
+					Sources",2024 272 14
+Ofek2020,True,10.1093/mnras/staa2814,2020.0,Monthly Notices of the Royal Astronomical Society,499,5782-5790,Ofek,A catalogue of over 10 million variable source candidates in ZTF Data Release 1,2020 499 5782
+Heinze2018,True,10.3847/1538-3881/aae47f,2018.0,The Astronomical Journal,156,241,Heinze,A First Catalog of Variable Stars Measured by the Asteroid Terrestrial-impact Last Alert System (ATLAS),2018 156 241
+Jayasinghe2021,True,10.1093/mnras/stab114,2021.0,Monthly Notices of the Royal Astronomical Society,503,200-235,Jayasinghe,The ASAS-SN catalogue of variable stars IX: The spectroscopic properties of Galactic variable stars,2021 503 200
+Drake2014,True,10.1088/0067-0049/213/1/9,2014.0,The Astrophysical Journal Supplement Series,213,9,Drake,THE CATALINA SURVEYS PERIODIC VARIABLE STAR CATALOG,2014 213 9
+Chen2018,True,10.3847/1538-4365/aad32b,2018.0,The Astrophysical Journal Supplement Series,237,28,Chen,Wide-field Infrared Survey Explorer (WISE) Catalog of Periodic Variable Stars,2018 237 28
+Prsa2022,False,10.5817/oejv2024-0248,2024.0,Open European Journal on Variable stars,,1-6,M.,CCD MINIMA TIMINGS FOR SELECTED ECLIPSING BINARIES AND NEW PHOTOMETRIC OBSERVATIONS FOR ECLIPSING BINARY CANDI,2022 258 16
+Kounkel2022,True,10.3847/1538-3881/ac866d,2022.0,The Astronomical Journal,164,137,Kounkel,Untangling the Galaxy. IV. Empirical Constraints on Angular Momentum Evolution and Gyrochronology for Young St,2022 164 137
+Mowlavi2021,True,10.1051/0004-6361/202039450,2021.0,Astronomy &amp; Astrophysics,648,A44,Mowlavi,Large-amplitude variables in <i>Gaia</i> Data Release 2,2021 648 A44
+SanchezSaez2021,True,10.3847/1538-3881/abd5c1,2021.0,The Astronomical Journal,161,141,Sánchez-Sáez,Alert Classification for the ALeRCE Broker System: The Light Curve Classifier,2021 161 141
+Forster2021,True,10.3847/1538-3881/abe9bc,2021.0,The Astronomical Journal,161,242,Förster,The Automatic Learning for the Rapid Classification of Events (ALeRCE) Alert Broker,2021 161 242
+Watson2006,False,10.1016/b978-0-08-017949-0.50032-7,1974.0,The Nebular Variables,,199-200,,Variable Star Index,2006 25 47
+Chambers2016,False,10.3847/1538-4357/ab1c61,2019.0,The Astrophysical Journal,877,116,Wang,"The Optical to Mid-infrared Extinction Law Based on the APOGEE, Gaia DR2, Pan-STARRS1, SDSS, APASS, 2MASS, and",2016 None None
+Lomb1976,True,10.1007/bf00648343,1976.0,Astrophysics and Space Science,39,447-462,Lomb,Least-squares frequency analysis of unequally spaced data,1976 39 447
+Scargle1982,True,10.1086/160554,1982.0,The Astrophysical Journal,263,835,Scargle,Studies in astronomical time series analysis. II - Statistical aspects of spectral analysis of unevenly spaced,1982 263 835
+VanderPlas2018,True,10.3847/1538-4365/aab766,2018.0,The Astrophysical Journal Supplement Series,236,16,VanderPlas,Understanding the Lomb–Scargle Periodogram,2018 236 16
+Baluev2008,True,10.1111/j.1365-2966.2008.12689.x,2008.0,Monthly Notices of the Royal Astronomical Society,385,1279-1285,Baluev,Assessing the statistical significance of periodogram peaks,2008 385 1279
+Kovacs2002,True,10.1051/0004-6361:20020802,2002.0,Astronomy &amp; Astrophysics,391,369-377,Kovács,A box-fitting algorithm in the search for periodic transits,2002 391 369
+Pedregosa2011,False,10.1002/9781119557500.ch5,2019.0,Python® Machine Learning,,93-117,,Getting Started with Scikit‐learn for Machine Learning,2011 12 2825
+Astropy2022,False,10.17226/25217_24,2018.0,,,,Tollerud,Towards Reproducibility Using Open Development: Astropy as a Case Study,2022 935 167
+Dey2019,False,10.33232/001c.158430,2026.0,The Open Journal of Astrophysics,9,,Luo,A Semi-Supervised Learning Method for the Identification of Bad Exposures in Large Imaging Surveys,2019 157 168
+CantatGaudin2023,True,10.1051/0004-6361/202244784,2023.0,Astronomy &amp; Astrophysics,669,A55,Cantat-Gaudin,"An empirical model of the
+                    <i>Gaia</i>
+                    DR3 selection function",2023 669 A55
